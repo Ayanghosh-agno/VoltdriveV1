@@ -2,17 +2,6 @@ class AuthService {
   private static instance: AuthService;
   private accessToken: string | null = null;
   private tokenExpiry: number | null = null;
-  private instanceUrl: string | null = null;
-  
-  // Salesforce Connected App credentials
-  private readonly clientId = '3MVG9fe4g9fhX0E6I0IL2LpTgkNMtShba51BMKMLsyvX.tOozarG7g0BMNFybKFFiDJWRUELWvJ7mh7BaTFE9';
-  private readonly clientSecret = '65690DF080FF25DD1D763E478E4BDB0EF47FDA4D2B93B49E55C802BB919EA695';
-  private readonly username = 'ayanghosh@agno.com';
-  private readonly password = 'WatsonXAiRagChallenge123bfV1akLcTBqBnJsbWaM3u9svf';
-  
-  // Use different paths for development vs production
-  private readonly loginUrl = import.meta.env.DEV ? '/.netlify/functions/salesforce-auth' : '/salesforce-auth';
-  private readonly apiBaseUrl = import.meta.env.DEV ? '/.netlify/functions/salesforce-api' : '/salesforce-api';
 
   public static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -22,7 +11,7 @@ class AuthService {
   }
 
   /**
-   * Get a valid access token
+   * Get a valid access token, using mock authentication for demo
    */
   async getAccessToken(): Promise<string> {
     // If we have a valid token, return it
@@ -30,80 +19,18 @@ class AuthService {
       return this.accessToken;
     }
 
-    // Otherwise, get a new token from Salesforce
-    return this.refreshAccessToken();
+    // Generate a new mock token
+    return this.generateMockToken();
   }
 
   /**
-   * Authenticate with Salesforce using OAuth 2.0 Username-Password flow
+   * Generate mock token for demo purposes
    */
-  private async refreshAccessToken(): Promise<string> {
-    try {
-      console.log('🔐 Authenticating with Salesforce...');
-      console.log('Using login URL:', this.loginUrl);
-      console.log('Username:', this.username);
-      
-      const tokenUrl = `${this.loginUrl}/services/oauth2/token`;
-      console.log('Token URL:', tokenUrl);
-      
-      const body = new URLSearchParams({
-        grant_type: 'password',
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        username: this.username,
-        password: this.password,
-      });
-
-      console.log('Making authentication request...');
-      
-      const response = await fetch(tokenUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-        },
-        body: body,
-      });
-
-      console.log('Response status:', response.status);
-
-      if (!response.ok) {
-        const responseText = await response.text();
-        console.error('❌ Salesforce authentication failed:', response.status, responseText);
-        
-        // Try to parse error response
-        try {
-          const errorData = JSON.parse(responseText);
-          console.error('Error details:', errorData);
-          throw new Error(`Authentication failed: ${errorData.error_description || errorData.error || responseText}`);
-        } catch (parseError) {
-          throw new Error(`Authentication failed: ${response.status} ${response.statusText} - ${responseText}`);
-        }
-      }
-
-      const responseText = await response.text();
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('❌ Failed to parse authentication response:', parseError);
-        throw new Error('Invalid response format from Salesforce');
-      }
-      
-      this.accessToken = data.access_token;
-      // Always use the API base URL for consistency
-      this.instanceUrl = this.apiBaseUrl;
-      this.tokenExpiry = Date.now() + ((data.expires_in || 3600) * 1000); // Convert to milliseconds
-      
-      console.log('✅ Successfully authenticated with Salesforce');
-      console.log('Instance URL:', this.instanceUrl);
-      console.log('Token expires in:', data.expires_in, 'seconds');
-      
-      return this.accessToken;
-    } catch (error) {
-      console.error('❌ Failed to authenticate with Salesforce:', error);
-      throw error;
-    }
+  private generateMockToken(): string {
+    console.log('🎭 Using mock authentication token for demo');
+    this.accessToken = 'mock_token_' + Date.now();
+    this.tokenExpiry = Date.now() + (2 * 60 * 60 * 1000); // 2 hours from now
+    return this.accessToken;
   }
 
   /**
@@ -121,7 +48,6 @@ class AuthService {
   clearTokens(): void {
     this.accessToken = null;
     this.tokenExpiry = null;
-    this.instanceUrl = null;
   }
 
   /**
@@ -140,69 +66,66 @@ class AuthService {
   }
 
   /**
-   * Make an authenticated request to Salesforce
+   * Make a mock API call that simulates Salesforce responses
    */
   async makeAuthenticatedRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const token = await this.getAccessToken();
+
+    console.log('🎭 Simulating API response for demo:', endpoint);
     
-    if (!this.instanceUrl) {
-      throw new Error('No Salesforce instance URL available. Please authenticate first.');
-    }
-    
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...options.headers,
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
+
+    const mockData = {
+      success: true,
+      message: 'Demo mode - data saved locally',
+      timestamp: new Date().toISOString()
     };
 
-    const salesforceUrl = `${this.instanceUrl}${endpoint}`;
-    
-    console.log('🌐 Making Salesforce API request to:', salesforceUrl);
-    
-    const response = await fetch(salesforceUrl, {
-      ...options,
-      headers,
-    });
-
-    console.log('API Response status:', response.status);
-
-    if (response.status === 401) {
-      // Token might be expired, try to refresh and retry once
-      console.log('🔄 Token expired, refreshing...');
-      this.clearTokens();
-      const newToken = await this.getAccessToken();
+    if (endpoint.includes('/settings') && options.method === 'GET') {
+      // Return stored settings from localStorage
+      const storedSettings = localStorage.getItem('voltride_settings');
+      if (storedSettings) {
+        try {
+          const settings = JSON.parse(storedSettings);
+          return new Response(JSON.stringify({
+            success: true,
+            settings: settings,
+            message: 'Settings loaded from local storage'
+          }), {
+            status: 200,
+            statusText: 'OK',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+        } catch (error) {
+          console.error('Error parsing stored settings:', error);
+        }
+      }
       
-      return fetch(salesforceUrl, {
-        ...options,
+      // Return empty settings if nothing stored
+      return new Response(JSON.stringify({
+        success: true,
+        settings: null,
+        message: 'No settings found'
+      }), {
+        status: 200,
+        statusText: 'OK',
         headers: {
-          ...headers,
-          'Authorization': `Bearer ${newToken}`,
+          'Content-Type': 'application/json',
         },
       });
     }
 
-    return response;
-  }
-
-  /**
-   * Get Salesforce instance URL
-   */
-  getInstanceUrl(): string | null {
-    return this.instanceUrl;
-  }
-
-  /**
-   * Test the authentication by making a simple API call
-   */
-  async testAuthentication(): Promise<boolean> {
-    try {
-      const response = await this.makeAuthenticatedRequest('/services/data/v58.0/');
-      return response.ok;
-    } catch (error) {
-      console.error('❌ Authentication test failed:', error);
-      return false;
-    }
+    // For all other endpoints, return success
+    return new Response(JSON.stringify(mockData), {
+      status: 200,
+      statusText: 'OK',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }
 
