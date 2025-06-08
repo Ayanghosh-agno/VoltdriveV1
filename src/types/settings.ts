@@ -49,3 +49,8 @@ export interface ApiResponse<T = any> {
   message?: string;
   error?: string;
 }
+
+export interface ConnectionStatus {
+  connected: boolean;
+  mode: 'production' | 'demo';
+}
