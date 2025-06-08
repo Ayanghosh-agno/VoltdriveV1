@@ -7,13 +7,13 @@
 
 [[redirects]]
   from = "/salesforce-auth/*"
-  to = "/.netlify/functions/salesforce-auth"
+  to = "/.netlify/functions/salesforce-auth/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/salesforce-api/*"
-  to = "/.netlify/functions/salesforce-api"
+  to = "/.netlify/functions/salesforce-api/:splat"
   status = 200
   force = true
 
