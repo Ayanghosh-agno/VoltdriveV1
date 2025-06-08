@@ -21,22 +21,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header className="bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-xl shadow-lg">
-                <Car className="h-6 w-6 text-white" />
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-xl shadow-lg">
+                  <Car className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                    VoltRide
+                  </h1>
+                  <p className="text-xs text-gray-500">Smart Driving Analytics</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  VoltRide
-                </h1>
-                <p className="text-xs text-gray-500">Smart Driving Analytics</p>
-              </div>
-              {/* Sticker Image */}
-              <div className="ml-2">
+              
+              {/* Sticker Image - positioned with better spacing */}
+              <div className="ml-4">
                 <img 
                   src="/black_circle_360x360.png" 
                   alt="VoltRide Sticker" 
-                  className="h-8 w-8 object-contain"
+                  className="h-10 w-10 object-contain opacity-80 hover:opacity-100 transition-opacity"
                 />
               </div>
             </div>
