@@ -7,20 +7,5 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  server: {
-    proxy: {
-      '/salesforce-auth': {
-        target: 'https://login.salesforce.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/salesforce-auth/, ''),
-        secure: true,
-      },
-      '/salesforce-api': {
-        target: 'https://agno-dev-ed.develop.my.salesforce.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/salesforce-api/, ''),
-        secure: true,
-      }
-    }
-  }
+  // Remove proxy configuration since Netlify functions will handle routing
 });
