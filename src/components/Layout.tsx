@@ -15,6 +15,62 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
+  const BoltAttribution = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div className="relative group">
+      {/* Subtle glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300"></div>
+      
+      {/* Main attribution button */}
+      <a
+        href="https://bolt.new"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`relative flex items-center space-x-2 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group ${
+          isMobile ? 'px-3 py-2' : 'px-4 py-3'
+        }`}
+      >
+        {/* Bolt.new logo */}
+        <div className="relative">
+          <img 
+            src="/black_circle_360x360.png" 
+            alt="Bolt.new" 
+            className={`rounded-full ${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+        </div>
+        
+        {/* Text content - hidden on mobile */}
+        {!isMobile && (
+          <div className="flex items-center space-x-2">
+            <div className="text-sm">
+              <div className="font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
+                Built with Bolt.new
+              </div>
+              <div className="text-xs text-gray-600 group-hover:text-purple-600 transition-colors">
+                AI-powered development
+              </div>
+            </div>
+            <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-purple-500 transition-colors" />
+          </div>
+        )}
+        
+        {/* Mobile icon only */}
+        {isMobile && (
+          <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-purple-500 transition-colors" />
+        )}
+      </a>
+      
+      {/* Enhanced tooltip */}
+      <div className={`absolute ${isMobile ? 'bottom-full left-1/2 transform -translate-x-1/2 mb-2' : 'bottom-full right-0 mb-3'} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`}>
+        <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-xl">
+          <div className="font-semibold">🚀 Create your own with AI</div>
+          <div className="text-gray-300 mt-1">Click to visit Bolt.new</div>
+          <div className={`absolute ${isMobile ? 'top-full left-1/2 transform -translate-x-1/2' : 'top-full right-4'} w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900`}></div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header */}
@@ -33,6 +89,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </div>
             
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -53,6 +110,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 );
               })}
             </nav>
+
+            {/* Mobile Bolt Attribution - Right side of header */}
+            <div className="md:hidden">
+              <BoltAttribution isMobile={true} />
+            </div>
           </div>
         </div>
       </header>
@@ -62,52 +124,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
 
-      {/* Bolt.new Attribution */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <div className="relative group">
-          {/* Subtle glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300"></div>
-          
-          {/* Main attribution button */}
-          <a
-            href="https://bolt.new"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative flex items-center space-x-3 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-full px-4 py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
-          >
-            {/* Bolt.new logo */}
-            <div className="relative">
-              <img 
-                src="/black_circle_360x360.png" 
-                alt="Bolt.new" 
-                className="w-8 h-8 rounded-full"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-            </div>
-            
-            {/* Text content */}
-            <div className="flex items-center space-x-2">
-              <div className="text-sm">
-                <div className="font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
-                  Built with Bolt.new
-                </div>
-                <div className="text-xs text-gray-600 group-hover:text-purple-600 transition-colors">
-                  AI-powered development
-                </div>
-              </div>
-              <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-purple-500 transition-colors" />
-            </div>
-          </a>
-          
-          {/* Enhanced tooltip */}
-          <div className="absolute bottom-full right-0 mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-            <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-xl">
-              <div className="font-semibold">🚀 Create your own with AI</div>
-              <div className="text-gray-300 mt-1">Click to visit Bolt.new</div>
-              <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-            </div>
-          </div>
-        </div>
+      {/* Desktop Bolt.new Attribution - Bottom right */}
+      <div className="hidden md:block fixed bottom-6 right-6 z-50">
+        <BoltAttribution isMobile={false} />
       </div>
 
       {/* Mobile Navigation */}
