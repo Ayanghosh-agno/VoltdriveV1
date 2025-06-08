@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Car, Smartphone, HelpCircle, LogOut, Edit3, Save, X, Download, Trash2 } from 'lucide-react';
+import { User, Bell, Shield, Car, Smartphone, HelpCircle, LogOut, Edit3, Save, X, Download, Trash2, Wifi, WifiOff } from 'lucide-react';
 import SettingSection from '../components/SettingSection';
 import ToggleSwitch from '../components/ToggleSwitch';
 import EditProfileModal from '../components/EditProfileModal';
 import SaveStatusIndicator from '../components/SaveStatusIndicator';
-import SalesforceAuthBanner from '../components/SalesforceAuthBanner';
 import { useSettings } from '../hooks/useSettings';
 import { VehicleSettings } from '../types/settings';
 
@@ -14,21 +13,20 @@ const SettingsPage: React.FC = () => {
     loading,
     error,
     saveStatus,
-    needsAuth,
+    connectionStatus,
     updateProfile,
     updateNotifications,
     updateVehicleSettings,
     updatePrivacySettings,
     exportData,
     deleteAccount,
-    loginToSalesforce
+    checkConnectionStatus
   } = useSettings();
 
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
   const [tempVehicleSettings, setTempVehicleSettings] = useState<VehicleSettings>(settings.vehicle);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showAuthBanner, setShowAuthBanner] = useState(true);
 
   const handleNotificationChange = async (key: string, value: boolean) => {
     const updatedNotifications = { ...settings.notifications, [key]: value };
@@ -74,10 +72,6 @@ const SettingsPage: React.FC = () => {
     setShowDeleteConfirm(false);
   };
 
-  const handleSalesforceLogin = () => {
-    loginToSalesforce();
-  };
-
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
@@ -98,25 +92,56 @@ const SettingsPage: React.FC = () => {
       {/* Save Status Indicator */}
       <SaveStatusIndicator status={saveStatus} error={error} />
 
-      {/* Salesforce Authentication Banner */}
-      {needsAuth && showAuthBanner && (
-        <SalesforceAuthBanner
-          onLogin={handleSalesforceLogin}
-          onDismiss={() => setShowAuthBanner(false)}
-        />
-      )}
-
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Customize your VoltRide experience</p>
-        {settings.lastUpdated && (
-          <p className="text-xs text-gray-500 mt-1">
-            Last updated: {new Date(settings.lastUpdated).toLocaleString()}
-            {needsAuth && <span className="text-amber-600 ml-2">(Local only - not synced to Salesforce)</span>}
-          </p>
-        )}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+            <p className="text-gray-600 mt-1">Customize your VoltRide experience</p>
+            {settings.lastUpdated && (
+              <p className="text-xs text-gray-500 mt-1">
+                Last updated: {new Date(settings.lastUpdated).toLocaleString()}
+              </p>
+            )}
+          </div>
+          
+          {/* Connection Status */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={checkConnectionStatus}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                connectionStatus.connected 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}
+            >
+              {connectionStatus.connected ? (
+                <Wifi className="h-4 w-4" />
+              ) : (
+                <WifiOff className="h-4 w-4" />
+              )}
+              <span>
+                {connectionStatus.mode === 'production' ? 'Salesforce Connected' : 'Demo Mode'}
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Connection Info Banner */}
+      {connectionStatus.mode === 'demo' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <WifiOff className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="text-sm font-medium text-amber-800">Demo Mode Active</h3>
+              <p className="text-sm text-amber-700 mt-1">
+                Your data is being saved locally. To enable Salesforce sync, configure the environment variables with your Salesforce credentials.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Profile Section */}
       <SettingSection icon={User} title="Profile" description="Manage your account information">

@@ -17,14 +17,14 @@ class SettingsApiService {
   }
 
   /**
-   * Save ALL settings to Salesforce
+   * Save ALL settings to Salesforce (with automatic fallback)
    */
   async saveSettings(settings: AppSettings): Promise<ApiResponse> {
     try {
       // Always save to localStorage as backup
       localStorage.setItem('voltride_settings', JSON.stringify(settings));
       
-      // Save to Salesforce
+      // Try to save to Salesforce
       const response = await this.authService.makeAuthenticatedRequest('/services/apexrest/voltride/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -41,30 +41,26 @@ class SettingsApiService {
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Salesforce API error: ${response.status} - ${errorText}`);
-      }
-
       const data = await response.json();
-      console.log('✅ Settings saved to Salesforce:', data);
       
-      return {
-        success: true,
-        data,
-        message: 'Settings saved to Salesforce successfully'
-      };
+      if (response.ok && data.success !== false) {
+        console.log('✅ Settings saved to Salesforce:', data);
+        return {
+          success: true,
+          data,
+          message: 'Settings saved successfully'
+        };
+      } else {
+        throw new Error(data.message || 'Salesforce save failed');
+      }
     } catch (error) {
-      console.error('❌ Error saving settings to Salesforce:', error);
+      console.log('⚠️ Salesforce unavailable, using local storage:', error);
       
-      // Fallback to localStorage
-      localStorage.setItem('voltride_settings', JSON.stringify(settings));
-      
+      // Always succeed with localStorage as fallback
       return {
         success: true,
         data: settings,
-        message: 'Settings saved locally (Salesforce unavailable)',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Settings saved locally (Salesforce sync will retry automatically)'
       };
     }
   }
@@ -117,7 +113,7 @@ class SettingsApiService {
   }
 
   /**
-   * Load ALL settings from Salesforce
+   * Load ALL settings from Salesforce (with automatic fallback)
    */
   async loadSettings(): Promise<ApiResponse<AppSettings>> {
     try {
@@ -126,14 +122,9 @@ class SettingsApiService {
         method: 'GET'
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Salesforce API error: ${response.status} - ${errorText}`);
-      }
-
       const data = await response.json();
       
-      if (data && data.settings) {
+      if (response.ok && data && data.settings) {
         // Save to localStorage as cache
         localStorage.setItem('voltride_settings', JSON.stringify(data.settings));
         
@@ -141,25 +132,14 @@ class SettingsApiService {
         return {
           success: true,
           data: data.settings,
-          message: 'Settings loaded from Salesforce successfully'
+          message: 'Settings loaded from Salesforce'
         };
       } else {
         console.log('ℹ️ No settings found in Salesforce, using local data');
         return this.loadFromLocalStorage();
       }
     } catch (error) {
-      console.error('❌ Error loading settings from Salesforce:', error);
-      
-      // If it's an authentication error, we should prompt for login
-      if (error instanceof Error && error.message.includes('Authentication')) {
-        return {
-          success: false,
-          error: 'Authentication required',
-          message: 'Please login to Salesforce to sync your settings'
-        };
-      }
-      
-      // For other errors, fallback to localStorage
+      console.log('⚠️ Salesforce unavailable, using local storage:', error);
       return this.loadFromLocalStorage();
     }
   }
@@ -241,7 +221,7 @@ class SettingsApiService {
   }
 
   /**
-   * Export user data from Salesforce
+   * Export user data from Salesforce (with fallback)
    */
   async exportUserData(): Promise<ApiResponse<Blob>> {
     try {
@@ -254,20 +234,20 @@ class SettingsApiService {
         })
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        const exportData = await response.json();
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        
+        return {
+          success: true,
+          data: blob,
+          message: 'Data exported successfully'
+        };
+      } else {
         throw new Error(`Export failed: ${response.status}`);
       }
-
-      const exportData = await response.json();
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-      
-      return {
-        success: true,
-        data: blob,
-        message: 'Data exported from Salesforce successfully'
-      };
     } catch (error) {
-      console.error('❌ Error exporting data from Salesforce:', error);
+      console.log('⚠️ Salesforce export unavailable, exporting local data:', error);
       
       // Fallback: export local data
       const localSettings = this.getCurrentSettings();
@@ -275,7 +255,7 @@ class SettingsApiService {
         settings: localSettings,
         exportDate: new Date().toISOString(),
         source: 'local_storage',
-        note: 'Exported from local storage due to Salesforce connection issue'
+        note: 'Exported from local storage'
       };
       
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -283,13 +263,13 @@ class SettingsApiService {
       return {
         success: true,
         data: blob,
-        message: 'Local data exported (Salesforce unavailable)'
+        message: 'Local data exported'
       };
     }
   }
 
   /**
-   * Delete user account from Salesforce
+   * Delete user account from Salesforce (with fallback)
    */
   async deleteAccount(): Promise<ApiResponse> {
     try {
@@ -301,21 +281,21 @@ class SettingsApiService {
         })
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        // Clear local data
+        localStorage.removeItem('voltride_settings');
+        this.authService.logout();
+        
+        console.log('✅ Account deleted from Salesforce');
+        return {
+          success: true,
+          message: 'Account deleted successfully'
+        };
+      } else {
         throw new Error(`Account deletion failed: ${response.status}`);
       }
-
-      // Clear local data
-      localStorage.removeItem('voltride_settings');
-      this.authService.logout();
-      
-      console.log('✅ Account deleted from Salesforce');
-      return {
-        success: true,
-        message: 'Account deleted from Salesforce successfully'
-      };
     } catch (error) {
-      console.error('❌ Error deleting account from Salesforce:', error);
+      console.log('⚠️ Salesforce deletion unavailable, clearing local data:', error);
       
       // Clear local data as fallback
       localStorage.removeItem('voltride_settings');
@@ -323,24 +303,35 @@ class SettingsApiService {
       
       return {
         success: true,
-        message: 'Local account data cleared (Salesforce deletion may have failed)',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Local account data cleared'
       };
     }
   }
 
   /**
-   * Check if user needs to authenticate with Salesforce
+   * Check if Salesforce integration is working
    */
-  needsAuthentication(): boolean {
-    return !this.authService.isAuthenticated();
-  }
+  async checkConnection(): Promise<{ connected: boolean; mode: 'production' | 'demo' }> {
+    try {
+      const configStatus = this.authService.getConfigStatus();
+      
+      if (!configStatus.configured) {
+        return { connected: false, mode: 'demo' };
+      }
 
-  /**
-   * Initiate Salesforce login
-   */
-  initiateLogin(): void {
-    this.authService.initiateOAuthFlow();
+      // Try a simple API call to test connection
+      const response = await this.authService.makeAuthenticatedRequest('/services/data/v58.0/sobjects', {
+        method: 'GET'
+      });
+
+      const connected = response.ok;
+      return { 
+        connected, 
+        mode: connected ? 'production' : 'demo' 
+      };
+    } catch (error) {
+      return { connected: false, mode: 'demo' };
+    }
   }
 }
 

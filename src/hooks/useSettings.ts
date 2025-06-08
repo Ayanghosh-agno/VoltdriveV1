@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AppSettings, ProfileData, NotificationSettings, VehicleSettings, PrivacySettings } from '../types/settings';
 import SettingsApiService from '../services/settingsApi';
-import AuthService from '../services/authService';
 
 const defaultSettings: AppSettings = {
   profile: {
@@ -45,41 +44,22 @@ export const useSettings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
-  const [needsAuth, setNeedsAuth] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; mode: 'production' | 'demo' }>({ connected: false, mode: 'demo' });
 
   const apiService = SettingsApiService.getInstance();
-  const authService = AuthService.getInstance();
 
-  // Check for OAuth callback on mount
+  // Check connection status on mount
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-    
-    if (code && state) {
-      handleOAuthCallback(code, state);
-    }
+    checkConnectionStatus();
   }, []);
 
-  const handleOAuthCallback = async (code: string, state: string) => {
-    setLoading(true);
+  const checkConnectionStatus = async () => {
     try {
-      const success = await authService.handleOAuthCallback(code, state);
-      if (success) {
-        // Clear URL parameters
-        window.history.replaceState({}, document.title, window.location.pathname);
-        // Load settings after successful authentication
-        await loadSettings();
-        setNeedsAuth(false);
-      } else {
-        setError('Authentication failed');
-        setNeedsAuth(true);
-      }
-    } catch (err) {
-      setError('Authentication error');
-      setNeedsAuth(true);
-    } finally {
-      setLoading(false);
+      const status = await apiService.checkConnection();
+      setConnectionStatus(status);
+      console.log(`🔗 Connection status: ${status.mode} mode, connected: ${status.connected}`);
+    } catch (error) {
+      setConnectionStatus({ connected: false, mode: 'demo' });
     }
   };
 
@@ -99,35 +79,18 @@ export const useSettings = () => {
         setSettings(JSON.parse(localSettings));
       }
 
-      // Check if we need authentication
-      if (apiService.needsAuthentication()) {
-        setNeedsAuth(true);
-        console.log('ℹ️ Salesforce authentication required');
-        setLoading(false);
-        return;
-      }
-
-      // Try to load from Salesforce
+      // Try to load from Salesforce (automatic, no user intervention needed)
       const response = await apiService.loadSettings();
       
       if (response.success && response.data) {
         setSettings(response.data);
-        setNeedsAuth(false);
-        console.log('✅ Settings loaded from Salesforce');
-      } else if (response.error === 'Authentication required') {
-        setNeedsAuth(true);
-        console.log('🔐 Authentication required for Salesforce');
+        console.log('✅ Settings loaded successfully');
       } else {
-        console.log('ℹ️ Using local settings, Salesforce data not available');
+        console.log('ℹ️ Using local settings');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load settings';
       setError(errorMessage);
-      
-      if (errorMessage.includes('Authentication')) {
-        setNeedsAuth(true);
-      }
-      
       console.error('❌ Error loading settings:', err);
     } finally {
       setLoading(false);
@@ -148,7 +111,7 @@ export const useSettings = () => {
       setSettings(updatedSettings);
       localStorage.setItem('voltride_settings', JSON.stringify(updatedSettings));
 
-      // Try to save to Salesforce
+      // Try to save to Salesforce (automatic)
       const response = await apiService.saveSettings(updatedSettings);
       
       if (response.success) {
@@ -162,11 +125,6 @@ export const useSettings = () => {
       setSaveStatus('error');
       const errorMessage = err instanceof Error ? err.message : 'Failed to save settings';
       setError(errorMessage);
-      
-      if (errorMessage.includes('Authentication')) {
-        setNeedsAuth(true);
-      }
-      
       console.error('❌ Error saving settings:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
@@ -199,11 +157,6 @@ export const useSettings = () => {
       setSaveStatus('error');
       const errorMessage = err instanceof Error ? err.message : 'Failed to save profile';
       setError(errorMessage);
-      
-      if (errorMessage.includes('Authentication')) {
-        setNeedsAuth(true);
-      }
-      
       console.error('❌ Error saving profile:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
@@ -236,11 +189,6 @@ export const useSettings = () => {
       setSaveStatus('error');
       const errorMessage = err instanceof Error ? err.message : 'Failed to save notifications';
       setError(errorMessage);
-      
-      if (errorMessage.includes('Authentication')) {
-        setNeedsAuth(true);
-      }
-      
       console.error('❌ Error saving notifications:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
@@ -273,11 +221,6 @@ export const useSettings = () => {
       setSaveStatus('error');
       const errorMessage = err instanceof Error ? err.message : 'Failed to save vehicle settings';
       setError(errorMessage);
-      
-      if (errorMessage.includes('Authentication')) {
-        setNeedsAuth(true);
-      }
-      
       console.error('❌ Error saving vehicle settings:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
@@ -310,11 +253,6 @@ export const useSettings = () => {
       setSaveStatus('error');
       const errorMessage = err instanceof Error ? err.message : 'Failed to save privacy settings';
       setError(errorMessage);
-      
-      if (errorMessage.includes('Authentication')) {
-        setNeedsAuth(true);
-      }
-      
       console.error('❌ Error saving privacy settings:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
@@ -344,11 +282,6 @@ export const useSettings = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to export data';
       setError(errorMessage);
-      
-      if (errorMessage.includes('Authentication')) {
-        setNeedsAuth(true);
-      }
-      
       console.error('❌ Error exporting data:', err);
     } finally {
       setLoading(false);
@@ -363,10 +296,6 @@ export const useSettings = () => {
       const response = await apiService.deleteAccount();
       
       if (response.success) {
-        // Clear local storage
-        localStorage.removeItem('voltride_settings');
-        authService.logout();
-        
         console.log('✅ Account deleted successfully');
         alert('Account deleted successfully');
       } else {
@@ -379,10 +308,6 @@ export const useSettings = () => {
     } finally {
       setLoading(false);
     }
-  }, [apiService, authService]);
-
-  const loginToSalesforce = useCallback(() => {
-    apiService.initiateLogin();
   }, [apiService]);
 
   return {
@@ -390,7 +315,7 @@ export const useSettings = () => {
     loading,
     error,
     saveStatus,
-    needsAuth,
+    connectionStatus,
     loadSettings,
     saveSettings,
     updateProfile,
@@ -399,6 +324,6 @@ export const useSettings = () => {
     updatePrivacySettings,
     exportData,
     deleteAccount,
-    loginToSalesforce
+    checkConnectionStatus
   };
 };
