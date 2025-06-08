@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Router as RouteIcon, Settings, Car } from 'lucide-react';
+import { Home, Router as RouteIcon, Settings, Car, ExternalLink } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -61,6 +61,54 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+
+      {/* Bolt.new Attribution */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="relative group">
+          {/* Subtle glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300"></div>
+          
+          {/* Main attribution button */}
+          <a
+            href="https://bolt.new"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative flex items-center space-x-3 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-full px-4 py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+          >
+            {/* Bolt.new logo */}
+            <div className="relative">
+              <img 
+                src="/black_circle_360x360.png" 
+                alt="Bolt.new" 
+                className="w-8 h-8 rounded-full"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+            </div>
+            
+            {/* Text content */}
+            <div className="flex items-center space-x-2">
+              <div className="text-sm">
+                <div className="font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
+                  Built with Bolt.new
+                </div>
+                <div className="text-xs text-gray-600 group-hover:text-purple-600 transition-colors">
+                  AI-powered development
+                </div>
+              </div>
+              <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-purple-500 transition-colors" />
+            </div>
+          </a>
+          
+          {/* Enhanced tooltip */}
+          <div className="absolute bottom-full right-0 mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+            <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-xl">
+              <div className="font-semibold">🚀 Create your own with AI</div>
+              <div className="text-gray-300 mt-1">Click to visit Bolt.new</div>
+              <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Mobile Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-white/20 z-50">
