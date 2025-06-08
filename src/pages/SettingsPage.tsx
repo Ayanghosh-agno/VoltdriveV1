@@ -4,6 +4,7 @@ import SettingSection from '../components/SettingSection';
 import ToggleSwitch from '../components/ToggleSwitch';
 import EditProfileModal from '../components/EditProfileModal';
 import SaveStatusIndicator from '../components/SaveStatusIndicator';
+import SalesforceAuthBanner from '../components/SalesforceAuthBanner';
 import { useSettings } from '../hooks/useSettings';
 import { VehicleSettings } from '../types/settings';
 
@@ -13,18 +14,21 @@ const SettingsPage: React.FC = () => {
     loading,
     error,
     saveStatus,
+    needsAuth,
     updateProfile,
     updateNotifications,
     updateVehicleSettings,
     updatePrivacySettings,
     exportData,
-    deleteAccount
+    deleteAccount,
+    loginToSalesforce
   } = useSettings();
 
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
   const [tempVehicleSettings, setTempVehicleSettings] = useState<VehicleSettings>(settings.vehicle);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAuthBanner, setShowAuthBanner] = useState(true);
 
   const handleNotificationChange = async (key: string, value: boolean) => {
     const updatedNotifications = { ...settings.notifications, [key]: value };
@@ -70,6 +74,10 @@ const SettingsPage: React.FC = () => {
     setShowDeleteConfirm(false);
   };
 
+  const handleSalesforceLogin = () => {
+    loginToSalesforce();
+  };
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
@@ -90,6 +98,14 @@ const SettingsPage: React.FC = () => {
       {/* Save Status Indicator */}
       <SaveStatusIndicator status={saveStatus} error={error} />
 
+      {/* Salesforce Authentication Banner */}
+      {needsAuth && showAuthBanner && (
+        <SalesforceAuthBanner
+          onLogin={handleSalesforceLogin}
+          onDismiss={() => setShowAuthBanner(false)}
+        />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
@@ -97,6 +113,7 @@ const SettingsPage: React.FC = () => {
         {settings.lastUpdated && (
           <p className="text-xs text-gray-500 mt-1">
             Last updated: {new Date(settings.lastUpdated).toLocaleString()}
+            {needsAuth && <span className="text-amber-600 ml-2">(Local only - not synced to Salesforce)</span>}
           </p>
         )}
       </div>

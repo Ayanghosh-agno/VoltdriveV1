@@ -45,9 +45,43 @@ export const useSettings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [needsAuth, setNeedsAuth] = useState(false);
 
   const apiService = SettingsApiService.getInstance();
   const authService = AuthService.getInstance();
+
+  // Check for OAuth callback on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    
+    if (code && state) {
+      handleOAuthCallback(code, state);
+    }
+  }, []);
+
+  const handleOAuthCallback = async (code: string, state: string) => {
+    setLoading(true);
+    try {
+      const success = await authService.handleOAuthCallback(code, state);
+      if (success) {
+        // Clear URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+        // Load settings after successful authentication
+        await loadSettings();
+        setNeedsAuth(false);
+      } else {
+        setError('Authentication failed');
+        setNeedsAuth(true);
+      }
+    } catch (err) {
+      setError('Authentication error');
+      setNeedsAuth(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load settings on mount
   useEffect(() => {
@@ -59,30 +93,46 @@ export const useSettings = () => {
     setError(null);
 
     try {
-      // Try to load from localStorage first (offline support)
+      // Try to load from localStorage first (for immediate UI)
       const localSettings = localStorage.getItem('voltride_settings');
       if (localSettings) {
         setSettings(JSON.parse(localSettings));
       }
 
-      // Authenticate and load from Salesforce
-      await authService.getAccessToken();
+      // Check if we need authentication
+      if (apiService.needsAuthentication()) {
+        setNeedsAuth(true);
+        console.log('ℹ️ Salesforce authentication required');
+        setLoading(false);
+        return;
+      }
+
+      // Try to load from Salesforce
       const response = await apiService.loadSettings();
       
       if (response.success && response.data) {
         setSettings(response.data);
-        localStorage.setItem('voltride_settings', JSON.stringify(response.data));
-        console.log('✅ Settings loaded from Salesforce and cached locally');
+        setNeedsAuth(false);
+        console.log('✅ Settings loaded from Salesforce');
+      } else if (response.error === 'Authentication required') {
+        setNeedsAuth(true);
+        console.log('🔐 Authentication required for Salesforce');
       } else {
         console.log('ℹ️ Using local settings, Salesforce data not available');
       }
     } catch (err) {
-      setError('Failed to load settings');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load settings';
+      setError(errorMessage);
+      
+      if (errorMessage.includes('Authentication')) {
+        setNeedsAuth(true);
+      }
+      
       console.error('❌ Error loading settings:', err);
     } finally {
       setLoading(false);
     }
-  }, [apiService, authService]);
+  }, [apiService]);
 
   const saveSettings = useCallback(async (newSettings: AppSettings) => {
     setSaveStatus('saving');
@@ -98,24 +148,29 @@ export const useSettings = () => {
       setSettings(updatedSettings);
       localStorage.setItem('voltride_settings', JSON.stringify(updatedSettings));
 
-      // Authenticate and save to Salesforce
-      await authService.getAccessToken();
+      // Try to save to Salesforce
       const response = await apiService.saveSettings(updatedSettings);
       
       if (response.success) {
         setSaveStatus('success');
-        console.log('✅ Settings saved to Salesforce successfully');
+        console.log('✅ Settings saved successfully');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
         throw new Error(response.error || 'Failed to save settings');
       }
     } catch (err) {
       setSaveStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to save settings');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save settings';
+      setError(errorMessage);
+      
+      if (errorMessage.includes('Authentication')) {
+        setNeedsAuth(true);
+      }
+      
       console.error('❌ Error saving settings:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
-  }, [apiService, authService]);
+  }, [apiService]);
 
   const updateProfile = useCallback(async (profile: ProfileData) => {
     setSaveStatus('saving');
@@ -131,23 +186,28 @@ export const useSettings = () => {
       setSettings(updatedSettings);
       localStorage.setItem('voltride_settings', JSON.stringify(updatedSettings));
 
-      await authService.getAccessToken();
       const response = await apiService.saveProfile(profile);
       
       if (response.success) {
         setSaveStatus('success');
-        console.log('✅ Profile saved to Salesforce successfully');
+        console.log('✅ Profile saved successfully');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
         throw new Error(response.error || 'Failed to save profile');
       }
     } catch (err) {
       setSaveStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to save profile');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save profile';
+      setError(errorMessage);
+      
+      if (errorMessage.includes('Authentication')) {
+        setNeedsAuth(true);
+      }
+      
       console.error('❌ Error saving profile:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
-  }, [settings, apiService, authService]);
+  }, [settings, apiService]);
 
   const updateNotifications = useCallback(async (notifications: NotificationSettings) => {
     setSaveStatus('saving');
@@ -163,23 +223,28 @@ export const useSettings = () => {
       setSettings(updatedSettings);
       localStorage.setItem('voltride_settings', JSON.stringify(updatedSettings));
 
-      await authService.getAccessToken();
       const response = await apiService.saveNotifications(notifications);
       
       if (response.success) {
         setSaveStatus('success');
-        console.log('✅ Notifications saved to Salesforce successfully');
+        console.log('✅ Notifications saved successfully');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
         throw new Error(response.error || 'Failed to save notifications');
       }
     } catch (err) {
       setSaveStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to save notifications');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save notifications';
+      setError(errorMessage);
+      
+      if (errorMessage.includes('Authentication')) {
+        setNeedsAuth(true);
+      }
+      
       console.error('❌ Error saving notifications:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
-  }, [settings, apiService, authService]);
+  }, [settings, apiService]);
 
   const updateVehicleSettings = useCallback(async (vehicle: VehicleSettings) => {
     setSaveStatus('saving');
@@ -195,23 +260,28 @@ export const useSettings = () => {
       setSettings(updatedSettings);
       localStorage.setItem('voltride_settings', JSON.stringify(updatedSettings));
 
-      await authService.getAccessToken();
       const response = await apiService.saveVehicleSettings(vehicle);
       
       if (response.success) {
         setSaveStatus('success');
-        console.log('✅ Vehicle settings saved to Salesforce successfully');
+        console.log('✅ Vehicle settings saved successfully');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
         throw new Error(response.error || 'Failed to save vehicle settings');
       }
     } catch (err) {
       setSaveStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to save vehicle settings');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save vehicle settings';
+      setError(errorMessage);
+      
+      if (errorMessage.includes('Authentication')) {
+        setNeedsAuth(true);
+      }
+      
       console.error('❌ Error saving vehicle settings:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
-  }, [settings, apiService, authService]);
+  }, [settings, apiService]);
 
   const updatePrivacySettings = useCallback(async (privacy: PrivacySettings) => {
     setSaveStatus('saving');
@@ -227,30 +297,34 @@ export const useSettings = () => {
       setSettings(updatedSettings);
       localStorage.setItem('voltride_settings', JSON.stringify(updatedSettings));
 
-      await authService.getAccessToken();
       const response = await apiService.savePrivacySettings(privacy);
       
       if (response.success) {
         setSaveStatus('success');
-        console.log('✅ Privacy settings saved to Salesforce successfully');
+        console.log('✅ Privacy settings saved successfully');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
         throw new Error(response.error || 'Failed to save privacy settings');
       }
     } catch (err) {
       setSaveStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to save privacy settings');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save privacy settings';
+      setError(errorMessage);
+      
+      if (errorMessage.includes('Authentication')) {
+        setNeedsAuth(true);
+      }
+      
       console.error('❌ Error saving privacy settings:', err);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
-  }, [settings, apiService, authService]);
+  }, [settings, apiService]);
 
   const exportData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      await authService.getAccessToken();
       const response = await apiService.exportUserData();
       
       if (response.success && response.data) {
@@ -268,19 +342,24 @@ export const useSettings = () => {
         throw new Error(response.error || 'Failed to export data');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to export data');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to export data';
+      setError(errorMessage);
+      
+      if (errorMessage.includes('Authentication')) {
+        setNeedsAuth(true);
+      }
+      
       console.error('❌ Error exporting data:', err);
     } finally {
       setLoading(false);
     }
-  }, [apiService, authService]);
+  }, [apiService]);
 
   const deleteAccount = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      await authService.getAccessToken();
       const response = await apiService.deleteAccount();
       
       if (response.success) {
@@ -289,24 +368,29 @@ export const useSettings = () => {
         authService.logout();
         
         console.log('✅ Account deleted successfully');
-        // In a real app, you would redirect to login or show success message
         alert('Account deleted successfully');
       } else {
         throw new Error(response.error || 'Failed to delete account');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete account');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete account';
+      setError(errorMessage);
       console.error('❌ Error deleting account:', err);
     } finally {
       setLoading(false);
     }
   }, [apiService, authService]);
 
+  const loginToSalesforce = useCallback(() => {
+    apiService.initiateLogin();
+  }, [apiService]);
+
   return {
     settings,
     loading,
     error,
     saveStatus,
+    needsAuth,
     loadSettings,
     saveSettings,
     updateProfile,
@@ -314,6 +398,7 @@ export const useSettings = () => {
     updateVehicleSettings,
     updatePrivacySettings,
     exportData,
-    deleteAccount
+    deleteAccount,
+    loginToSalesforce
   };
 };

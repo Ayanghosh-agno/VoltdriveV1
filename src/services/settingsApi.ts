@@ -17,14 +17,14 @@ class SettingsApiService {
   }
 
   /**
-   * Save ALL settings to localStorage (mock Salesforce)
+   * Save ALL settings to Salesforce
    */
   async saveSettings(settings: AppSettings): Promise<ApiResponse> {
     try {
-      // Always save to localStorage for demo
+      // Always save to localStorage as backup
       localStorage.setItem('voltride_settings', JSON.stringify(settings));
       
-      // Simulate API call
+      // Save to Salesforce
       const response = await this.authService.makeAuthenticatedRequest('/services/apexrest/voltride/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -41,16 +41,21 @@ class SettingsApiService {
         }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Salesforce API error: ${response.status} - ${errorText}`);
+      }
+
       const data = await response.json();
-      console.log('✅ All settings saved (demo mode):', data);
+      console.log('✅ Settings saved to Salesforce:', data);
       
       return {
         success: true,
         data,
-        message: 'All settings saved successfully (demo mode)'
+        message: 'Settings saved to Salesforce successfully'
       };
     } catch (error) {
-      console.error('❌ Error saving settings:', error);
+      console.error('❌ Error saving settings to Salesforce:', error);
       
       // Fallback to localStorage
       localStorage.setItem('voltride_settings', JSON.stringify(settings));
@@ -58,7 +63,8 @@ class SettingsApiService {
       return {
         success: true,
         data: settings,
-        message: 'Settings saved locally'
+        message: 'Settings saved locally (Salesforce unavailable)',
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -111,30 +117,49 @@ class SettingsApiService {
   }
 
   /**
-   * Load ALL settings from localStorage (mock Salesforce)
+   * Load ALL settings from Salesforce
    */
   async loadSettings(): Promise<ApiResponse<AppSettings>> {
     try {
-      // Simulate API call
+      // Try to load from Salesforce first
       const response = await this.authService.makeAuthenticatedRequest('/services/apexrest/voltride/settings', {
         method: 'GET'
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Salesforce API error: ${response.status} - ${errorText}`);
+      }
+
       const data = await response.json();
       
-      if (data.success && data.settings) {
-        console.log('✅ Settings loaded (demo mode)');
+      if (data && data.settings) {
+        // Save to localStorage as cache
+        localStorage.setItem('voltride_settings', JSON.stringify(data.settings));
+        
+        console.log('✅ Settings loaded from Salesforce');
         return {
           success: true,
           data: data.settings,
-          message: 'Settings loaded successfully (demo mode)'
+          message: 'Settings loaded from Salesforce successfully'
         };
       } else {
-        console.log('ℹ️ No settings found, using defaults');
+        console.log('ℹ️ No settings found in Salesforce, using local data');
         return this.loadFromLocalStorage();
       }
     } catch (error) {
-      console.error('❌ Error loading settings:', error);
+      console.error('❌ Error loading settings from Salesforce:', error);
+      
+      // If it's an authentication error, we should prompt for login
+      if (error instanceof Error && error.message.includes('Authentication')) {
+        return {
+          success: false,
+          error: 'Authentication required',
+          message: 'Please login to Salesforce to sync your settings'
+        };
+      }
+      
+      // For other errors, fallback to localStorage
       return this.loadFromLocalStorage();
     }
   }
@@ -216,12 +241,11 @@ class SettingsApiService {
   }
 
   /**
-   * Export user data (mock)
+   * Export user data from Salesforce
    */
   async exportUserData(): Promise<ApiResponse<Blob>> {
     try {
-      // Simulate API call
-      await this.authService.makeAuthenticatedRequest('/services/apexrest/voltride/export', {
+      const response = await this.authService.makeAuthenticatedRequest('/services/apexrest/voltride/export', {
         method: 'POST',
         body: JSON.stringify({
           exportType: 'complete',
@@ -230,23 +254,20 @@ class SettingsApiService {
         })
       });
 
-      // Export local data
-      const localSettings = this.getCurrentSettings();
-      const exportData = {
-        settings: localSettings,
-        exportDate: new Date().toISOString(),
-        source: 'demo_mode'
-      };
-      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`);
+      }
+
+      const exportData = await response.json();
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       
       return {
         success: true,
         data: blob,
-        message: 'Data exported successfully (demo mode)'
+        message: 'Data exported from Salesforce successfully'
       };
     } catch (error) {
-      console.error('❌ Error exporting data:', error);
+      console.error('❌ Error exporting data from Salesforce:', error);
       
       // Fallback: export local data
       const localSettings = this.getCurrentSettings();
@@ -254,7 +275,7 @@ class SettingsApiService {
         settings: localSettings,
         exportDate: new Date().toISOString(),
         source: 'local_storage',
-        error: 'Export failed'
+        note: 'Exported from local storage due to Salesforce connection issue'
       };
       
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -262,18 +283,17 @@ class SettingsApiService {
       return {
         success: true,
         data: blob,
-        message: 'Local data exported'
+        message: 'Local data exported (Salesforce unavailable)'
       };
     }
   }
 
   /**
-   * Delete user account (mock)
+   * Delete user account from Salesforce
    */
   async deleteAccount(): Promise<ApiResponse> {
     try {
-      // Simulate API call
-      await this.authService.makeAuthenticatedRequest('/services/apexrest/voltride/account', {
+      const response = await this.authService.makeAuthenticatedRequest('/services/apexrest/voltride/account', {
         method: 'DELETE',
         body: JSON.stringify({
           confirmDeletion: true,
@@ -281,17 +301,21 @@ class SettingsApiService {
         })
       });
 
+      if (!response.ok) {
+        throw new Error(`Account deletion failed: ${response.status}`);
+      }
+
       // Clear local data
       localStorage.removeItem('voltride_settings');
       this.authService.logout();
       
-      console.log('✅ Account deletion completed (demo mode)');
+      console.log('✅ Account deleted from Salesforce');
       return {
         success: true,
-        message: 'Account deleted successfully (demo mode)'
+        message: 'Account deleted from Salesforce successfully'
       };
     } catch (error) {
-      console.error('❌ Error deleting account:', error);
+      console.error('❌ Error deleting account from Salesforce:', error);
       
       // Clear local data as fallback
       localStorage.removeItem('voltride_settings');
@@ -299,9 +323,24 @@ class SettingsApiService {
       
       return {
         success: true,
-        message: 'Local account data cleared'
+        message: 'Local account data cleared (Salesforce deletion may have failed)',
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+
+  /**
+   * Check if user needs to authenticate with Salesforce
+   */
+  needsAuthentication(): boolean {
+    return !this.authService.isAuthenticated();
+  }
+
+  /**
+   * Initiate Salesforce login
+   */
+  initiateLogin(): void {
+    this.authService.initiateOAuthFlow();
   }
 }
 
