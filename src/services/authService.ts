@@ -10,9 +10,9 @@ class AuthService {
   private readonly username = 'ayanghosh@agno.com';
   private readonly password = 'WatsonXAiRagChallenge123bfV1akLcTBqBnJsbWaM3u9svf';
   
-  // Use Netlify Functions for both development and production
-  private readonly loginUrl = '/salesforce-auth';
-  private readonly apiBaseUrl = '/salesforce-api';
+  // Use different paths for development vs production
+  private readonly loginUrl = import.meta.env.DEV ? '/.netlify/functions/salesforce-auth' : '/salesforce-auth';
+  private readonly apiBaseUrl = import.meta.env.DEV ? '/.netlify/functions/salesforce-api' : '/salesforce-api';
 
   public static getInstance(): AuthService {
     if (!AuthService.instance) {
