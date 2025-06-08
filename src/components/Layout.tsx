@@ -55,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               })}
             </nav>
 
-            {/* Mobile Bolt Attribution - Simple image only */}
+            {/* Mobile Bolt Attribution - 90px x 90px */}
             <div className="md:hidden">
               <a
                 href="https://bolt.new"
@@ -65,9 +65,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               >
                 <img 
                   src="/black_circle_360x360.png" 
-                  style={{ height: '90px', width: '90px' }}
                   alt="Bolt.new" 
-                  className="w-8 h-8 rounded-full hover:scale-110 transition-transform duration-200"
+                  className="rounded-full hover:scale-110 transition-transform duration-200"
+                  style={{ width: '90px', height: '90px', minWidth: '90px', minHeight: '90px' }}
                 />
               </a>
             </div>
@@ -80,7 +80,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
 
-      {/* Desktop Bolt.new Attribution - Simple image only */}
+      {/* Desktop Bolt.new Attribution - 90px x 90px */}
       <div className="hidden md:block fixed bottom-6 right-6 z-50">
         <a
           href="https://bolt.new"
@@ -91,7 +91,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <img 
             src="/black_circle_360x360.png" 
             alt="Bolt.new" 
-            className="w-12 h-12 rounded-full hover:scale-110 transition-transform duration-200 shadow-lg"
+            className="rounded-full hover:scale-110 transition-transform duration-200 shadow-lg"
+            style={{ width: '90px', height: '90px', minWidth: '90px', minHeight: '90px' }}
           />
         </a>
       </div>
