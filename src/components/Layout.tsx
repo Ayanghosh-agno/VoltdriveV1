@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Router as RouteIcon, Settings, Car } from 'lucide-react';
+import { Home, Router as RouteIcon, Settings, Car, Sparkles } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -33,8 +33,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </div>
             
-            {/* Navigation with integrated sticker */}
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="hidden md:flex space-x-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -53,26 +52,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </Link>
                 );
               })}
-              
-              {/* Premium Status with Sticker */}
-              <div className="relative ml-4">
-                <button 
-                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                  onClick={() => {
-                    alert('🎉 VoltRide Premium Features - Advanced Analytics & AI Coaching!');
-                  }}
-                >
-                  <img 
-                    src="/black_circle_360x360.png" 
-                    alt="Premium" 
-                    className="h-5 w-5 object-contain"
-                  />
-                  <span className="font-medium text-sm">Premium</span>
-                </button>
-                
-                {/* Subtle glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur-lg opacity-30 -z-10"></div>
-              </div>
             </nav>
           </div>
         </div>
@@ -82,6 +61,40 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+
+      {/* Floating Action Button - Premium Feature */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="relative group">
+          {/* Pulsing background animation */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-full animate-pulse opacity-75 blur-lg scale-110"></div>
+          
+          {/* Main button */}
+          <button 
+            className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-300 group-hover:rotate-12"
+            onClick={() => {
+              alert('🚀 Unlock VoltRide Premium!\n\n✨ Advanced AI Coaching\n📊 Detailed Analytics\n🏆 Performance Insights\n💰 Fuel Savings Tips');
+            }}
+          >
+            {/* Sticker image */}
+            <img 
+              src="/black_circle_360x360.png" 
+              alt="Premium" 
+              className="h-8 w-8 object-contain relative z-10"
+            />
+            
+            {/* Sparkle effect */}
+            <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-yellow-300 animate-bounce" />
+          </button>
+          
+          {/* Tooltip */}
+          <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+            <div className="bg-gray-900 text-white text-sm px-3 py-2 rounded-lg whitespace-nowrap shadow-lg">
+              Unlock Premium Features!
+              <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Mobile Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-white/20 z-50">
@@ -104,21 +117,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Link>
             );
           })}
-          
-          {/* Mobile Premium Button */}
-          <button 
-            className="flex flex-col items-center space-y-1 px-3 py-2 rounded-xl text-purple-600 hover:bg-purple-50 transition-all duration-200"
-            onClick={() => {
-              alert('🎉 VoltRide Premium Features!');
-            }}
-          >
-            <img 
-              src="/black_circle_360x360.png" 
-              alt="Premium" 
-              className="h-5 w-5 object-contain"
-            />
-            <span className="text-xs font-medium">Premium</span>
-          </button>
         </div>
       </nav>
     </div>
