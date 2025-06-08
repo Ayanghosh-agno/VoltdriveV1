@@ -19,8 +19,7 @@ const SettingsPage: React.FC = () => {
     updateVehicleSettings,
     updatePrivacySettings,
     exportData,
-    deleteAccount,
-    checkConnectionStatus
+    deleteAccount
   } = useSettings();
 
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
@@ -430,9 +429,6 @@ const SettingsPage: React.FC = () => {
                 <p className="text-sm text-gray-600">Configured - OBD-II & GPS Integrated</p>
               </div>
             </div>
-            <button className="text-blue-600 text-sm hover:text-blue-700 transition-colors">
-              Configure
-            </button>
           </div>
           
           {/* Cloud Connection Status */}
@@ -459,12 +455,6 @@ const SettingsPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={checkConnectionStatus}
-              className="text-blue-600 text-sm hover:text-blue-700 transition-colors"
-            >
-              Check Status
-            </button>
           </div>
           
           <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
