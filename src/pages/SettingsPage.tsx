@@ -421,39 +421,32 @@ const SettingsPage: React.FC = () => {
       {/* Device Settings */}
       <SettingSection icon={Smartphone} title="Device Settings" description="Manage connected VoltRide Module">
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <div>
-                <h4 className="font-medium text-gray-900">VoltRide Module</h4>
-                <p className="text-sm text-gray-600">Configured - OBD-II & GPS Integrated</p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Cloud Connection Status */}
+          {/* VoltRide Module Status */}
           <div className={`flex items-center justify-between p-4 rounded-lg border ${
             connectionStatus.connected 
               ? 'bg-green-50 border-green-200' 
               : 'bg-gray-50 border-gray-200'
           }`}>
             <div className="flex items-center space-x-3">
+              <div className={`w-3 h-3 rounded-full ${
+                connectionStatus.connected ? 'bg-green-500' : 'bg-gray-400'
+              }`}></div>
+              <div>
+                <h4 className="font-medium text-gray-900">VoltRide Module</h4>
+                <p className="text-sm text-gray-600">
+                  {connectionStatus.connected 
+                    ? 'Connected to cloud - OBD-II & GPS Integrated'
+                    : 'Not connected to cloud - OBD-II & GPS Integrated'
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
               {connectionStatus.connected ? (
                 <Cloud className="h-5 w-5 text-green-600" />
               ) : (
                 <CloudOff className="h-5 w-5 text-gray-500" />
               )}
-              <div>
-                <h4 className="font-medium text-gray-900">
-                  {connectionStatus.connected ? 'Connected to cloud' : 'Not connected to cloud'}
-                </h4>
-                <p className="text-sm text-gray-600">
-                  {connectionStatus.connected 
-                    ? 'Data is being synchronized'
-                    : 'Data is stored locally only'
-                  }
-                </p>
-              </div>
             </div>
           </div>
           
