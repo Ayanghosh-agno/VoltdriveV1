@@ -65,8 +65,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               >
                 <img 
                   src="/black_circle_360x360.png" 
-                  style="height:90px;width:90px
-                  "
+                  style={{ height: '90px', width: '90px' }}
                   alt="Bolt.new" 
                   className="w-8 h-8 rounded-full hover:scale-110 transition-transform duration-200"
                 />
