@@ -10,7 +10,7 @@
   node_bundler = "esbuild"
 
 [dev]
-  command = "npm run dev"
+  command = "npm run vite:dev"
   port = 3000
   publish = "dist"
   functions = "netlify/functions"
@@ -45,7 +45,7 @@
   for = "/.netlify/functions/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Accept"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, X-Salesforce-Instance"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Max-Age = "86400"
 

@@ -2,7 +2,7 @@ export const handler = async (event, context) => {
   // Set CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, X-Salesforce-Instance',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Max-Age': '86400',
   };
@@ -19,26 +19,77 @@ export const handler = async (event, context) => {
   try {
     console.log('Salesforce API Function - Event path:', event.path);
     console.log('Salesforce API Function - HTTP method:', event.httpMethod);
-    console.log('Salesforce API Function - Headers:', event.headers);
+    
+    // Check if we have authorization header
+    if (!event.headers.authorization) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({
+          error: 'No authorization header provided',
+          mode: 'demo'
+        }),
+      };
+    }
+
+    // Check if this is a demo token
+    if (event.headers.authorization.includes('demo_token_')) {
+      console.log('Demo token detected, returning mock response');
+      
+      // Return appropriate mock responses based on the endpoint
+      const pathParts = event.path.split('/salesforce-api');
+      const salesforcePath = pathParts[1] || '';
+      
+      let mockResponse = {
+        success: true,
+        message: 'Demo mode response',
+        timestamp: new Date().toISOString()
+      };
+
+      if (salesforcePath.includes('/settings')) {
+        if (event.httpMethod === 'GET') {
+          mockResponse = {
+            success: true,
+            settings: null,
+            message: 'No settings found in demo mode'
+          };
+        } else {
+          mockResponse = {
+            success: true,
+            message: 'Settings saved in demo mode'
+          };
+        }
+      }
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(mockResponse),
+      };
+    }
+    
+    // Get instance URL from headers or use default
+    const instanceUrl = event.headers['x-salesforce-instance'] || 'https://agno-dev-ed.develop.my.salesforce.com';
     
     // Extract the path after /salesforce-api
     const pathParts = event.path.split('/salesforce-api');
     const salesforcePath = pathParts[1] || '';
-    const salesforceUrl = `https://agno-dev-ed.develop.my.salesforce.com${salesforcePath}`;
+    const salesforceUrl = `${instanceUrl}${salesforcePath}`;
     
     console.log('Forwarding to Salesforce API URL:', salesforceUrl);
 
     const requestHeaders = {
       'Content-Type': event.headers['content-type'] || 'application/json',
       'Accept': 'application/json',
+      'User-Agent': 'VoltRide-App/1.0',
     };
 
-    // Forward Authorization header if present
+    // Forward Authorization header
     if (event.headers.authorization) {
       requestHeaders.Authorization = event.headers.authorization;
     }
 
-    console.log('Request headers:', requestHeaders);
+    console.log('Request headers:', Object.keys(requestHeaders));
 
     const response = await fetch(salesforceUrl, {
       method: event.httpMethod,
@@ -49,7 +100,6 @@ export const handler = async (event, context) => {
     const responseText = await response.text();
     
     console.log('Salesforce API response status:', response.status);
-    console.log('Salesforce API response:', responseText);
     
     return {
       statusCode: response.status,
@@ -62,13 +112,16 @@ export const handler = async (event, context) => {
   } catch (error) {
     console.error('Salesforce API function error:', error);
     
+    // Return demo mode response on error
     return {
-      statusCode: 500,
+      statusCode: 200,
       headers,
       body: JSON.stringify({
-        error: 'Internal server error',
-        message: error.message,
-        stack: error.stack,
+        success: false,
+        error: 'Salesforce API connection failed',
+        mode: 'demo',
+        message: 'Running in demo mode due to API connection error',
+        details: error.message
       }),
     };
   }

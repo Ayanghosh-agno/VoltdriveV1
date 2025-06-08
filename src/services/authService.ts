@@ -28,19 +28,25 @@ class AuthService {
       return this.accessToken;
     }
 
-    // Automatically authenticate using username/password flow
+    // Check if Salesforce is configured
+    if (!this.isConfigured()) {
+      console.log('🎭 Salesforce not configured, using demo mode');
+      return this.generateMockToken();
+    }
+
+    // Try to authenticate with Salesforce
     try {
       await this.authenticateWithCredentials();
       if (this.accessToken) {
         return this.accessToken;
       }
     } catch (error) {
-      console.error('❌ Automatic authentication failed:', error);
-      // Fall back to mock mode for demo
+      console.log('⚠️ Salesforce authentication failed, using demo mode:', error);
       return this.generateMockToken();
     }
 
-    throw new Error('Authentication failed');
+    // Fallback to demo mode
+    return this.generateMockToken();
   }
 
   /**
@@ -48,7 +54,7 @@ class AuthService {
    */
   private async authenticateWithCredentials(): Promise<void> {
     try {
-      console.log('🔐 Authenticating with Salesforce automatically...');
+      console.log('🔐 Authenticating with Salesforce...');
       
       const response = await fetch('/salesforce-auth/services/oauth2/token', {
         method: 'POST',
@@ -66,11 +72,30 @@ class AuthService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.log('⚠️ Salesforce authentication failed, using demo mode:', errorText);
-        throw new Error(`Authentication failed: ${response.status} - ${errorText}`);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+
+        // Check if this is a "not configured" response
+        if (errorData.mode === 'demo') {
+          console.log('🎭 Salesforce not configured on server, using demo mode');
+          throw new Error('Salesforce not configured');
+        }
+
+        console.log('⚠️ Salesforce authentication failed:', errorData);
+        throw new Error(`Authentication failed: ${response.status} - ${errorData.error || errorText}`);
       }
 
       const tokenData = await response.json();
+      
+      // Check if this is actually a demo mode response
+      if (tokenData.mode === 'demo') {
+        console.log('🎭 Server returned demo mode response');
+        throw new Error('Demo mode');
+      }
       
       this.accessToken = tokenData.access_token;
       this.instanceUrl = tokenData.instance_url || this.INSTANCE_URL;
@@ -78,7 +103,7 @@ class AuthService {
 
       console.log('✅ Salesforce authentication successful');
     } catch (error) {
-      console.error('❌ Credential authentication failed:', error);
+      console.log('❌ Credential authentication failed:', error);
       throw error;
     }
   }
@@ -181,7 +206,7 @@ class AuthService {
 
       return response;
     } catch (error) {
-      console.error('❌ Salesforce API request failed, falling back to demo mode:', error);
+      console.log('⚠️ Salesforce API request failed, falling back to demo mode:', error);
       return this.makeDemoRequest(endpoint, options);
     }
   }

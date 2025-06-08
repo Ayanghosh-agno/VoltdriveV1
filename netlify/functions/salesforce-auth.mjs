@@ -2,7 +2,7 @@ export const handler = async (event, context) => {
   // Set CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, X-Salesforce-Instance',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Max-Age': '86400',
   };
@@ -19,7 +19,24 @@ export const handler = async (event, context) => {
   try {
     console.log('Salesforce Auth Function - Event path:', event.path);
     console.log('Salesforce Auth Function - HTTP method:', event.httpMethod);
-    console.log('Salesforce Auth Function - Body:', event.body);
+    
+    // Check if Salesforce credentials are configured
+    const clientId = process.env.VITE_SALESFORCE_CLIENT_ID || process.env.SALESFORCE_CLIENT_ID;
+    const clientSecret = process.env.VITE_SALESFORCE_CLIENT_SECRET || process.env.SALESFORCE_CLIENT_SECRET;
+    
+    if (!clientId || !clientSecret || clientId === 'default_client_id') {
+      console.log('Salesforce credentials not configured, returning demo mode response');
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          error: 'Salesforce not configured',
+          mode: 'demo',
+          message: 'Running in demo mode - configure Salesforce environment variables for production'
+        }),
+      };
+    }
     
     // Extract the path after /salesforce-auth
     const pathParts = event.path.split('/salesforce-auth');
@@ -30,6 +47,7 @@ export const handler = async (event, context) => {
 
     const requestHeaders = {
       'Accept': 'application/json',
+      'User-Agent': 'VoltRide-App/1.0',
     };
 
     // Set content type based on the request
@@ -46,7 +64,6 @@ export const handler = async (event, context) => {
     const responseText = await response.text();
     
     console.log('Salesforce response status:', response.status);
-    console.log('Salesforce response:', responseText);
     
     return {
       statusCode: response.status,
@@ -59,13 +76,16 @@ export const handler = async (event, context) => {
   } catch (error) {
     console.error('Salesforce auth function error:', error);
     
+    // Return demo mode response on error
     return {
-      statusCode: 500,
+      statusCode: 200,
       headers,
       body: JSON.stringify({
-        error: 'Internal server error',
-        message: error.message,
-        stack: error.stack,
+        success: false,
+        error: 'Salesforce connection failed',
+        mode: 'demo',
+        message: 'Running in demo mode due to connection error',
+        details: error.message
       }),
     };
   }
