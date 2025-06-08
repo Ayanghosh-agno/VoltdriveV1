@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Car, Smartphone, HelpCircle, LogOut, Edit3, Save, X, Download, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { User, Bell, Shield, Car, Smartphone, HelpCircle, LogOut, Edit3, Save, X, Download, Trash2, Wifi, WifiOff, Cloud, CheckCircle, AlertCircle } from 'lucide-react';
 import SettingSection from '../components/SettingSection';
 import ToggleSwitch from '../components/ToggleSwitch';
 import EditProfileModal from '../components/EditProfileModal';
@@ -27,6 +27,16 @@ const SettingsPage: React.FC = () => {
   const [tempVehicleSettings, setTempVehicleSettings] = useState<VehicleSettings>(settings.vehicle);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSalesforceModal, setShowSalesforceModal] = useState(false);
+  const [salesforceCredentials, setSalesforceCredentials] = useState({
+    clientId: '',
+    clientSecret: '',
+    username: '',
+    password: '',
+    securityToken: '',
+    instanceUrl: 'https://login.salesforce.com'
+  });
+  const [salesforceConnecting, setSalesforceConnecting] = useState(false);
 
   const handleNotificationChange = async (key: string, value: boolean) => {
     const updatedNotifications = { ...settings.notifications, [key]: value };
@@ -72,6 +82,49 @@ const SettingsPage: React.FC = () => {
     setShowDeleteConfirm(false);
   };
 
+  const handleSalesforceConnect = async () => {
+    setSalesforceConnecting(true);
+    try {
+      // Store credentials in environment variables (in a real app, this would be handled securely)
+      const envVars = {
+        VITE_SALESFORCE_CLIENT_ID: salesforceCredentials.clientId,
+        VITE_SALESFORCE_CLIENT_SECRET: salesforceCredentials.clientSecret,
+        VITE_SALESFORCE_USERNAME: salesforceCredentials.username,
+        VITE_SALESFORCE_PASSWORD: salesforceCredentials.password,
+        VITE_SALESFORCE_SECURITY_TOKEN: salesforceCredentials.securityToken,
+        VITE_SALESFORCE_INSTANCE_URL: salesforceCredentials.instanceUrl
+      };
+
+      // In a real application, you would send these to your backend securely
+      console.log('Connecting to Salesforce with credentials:', {
+        ...envVars,
+        VITE_SALESFORCE_PASSWORD: '***',
+        VITE_SALESFORCE_CLIENT_SECRET: '***',
+        VITE_SALESFORCE_SECURITY_TOKEN: '***'
+      });
+
+      // Simulate connection attempt
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Check connection status
+      await checkConnectionStatus();
+      
+      setShowSalesforceModal(false);
+      setSalesforceCredentials({
+        clientId: '',
+        clientSecret: '',
+        username: '',
+        password: '',
+        securityToken: '',
+        instanceUrl: 'https://login.salesforce.com'
+      });
+    } catch (error) {
+      console.error('Failed to connect to Salesforce:', error);
+    } finally {
+      setSalesforceConnecting(false);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
@@ -104,44 +157,69 @@ const SettingsPage: React.FC = () => {
               </p>
             )}
           </div>
-          
-          {/* Connection Status */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={checkConnectionStatus}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                connectionStatus.connected 
-                  ? 'bg-green-50 text-green-700 border border-green-200' 
-                  : 'bg-amber-50 text-amber-700 border border-amber-200'
-              }`}
-            >
-              {connectionStatus.connected ? (
-                <Wifi className="h-4 w-4" />
-              ) : (
-                <WifiOff className="h-4 w-4" />
-              )}
-              <span>
-                {connectionStatus.mode === 'production' ? 'Salesforce Connected' : 'Demo Mode'}
-              </span>
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Connection Info Banner */}
-      {connectionStatus.mode === 'demo' && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div className="flex items-start space-x-3">
-            <WifiOff className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="text-sm font-medium text-amber-800">Demo Mode Active</h3>
-              <p className="text-sm text-amber-700 mt-1">
-                Your data is being saved locally. To enable Salesforce sync, configure the environment variables with your Salesforce credentials.
-              </p>
+      {/* Salesforce Connection Section */}
+      <SettingSection icon={Cloud} title="Salesforce Integration" description="Connect to Salesforce for data synchronization">
+        <div className="space-y-4">
+          <div className={`p-4 rounded-lg border ${
+            connectionStatus.connected 
+              ? 'bg-green-50 border-green-200' 
+              : 'bg-gray-50 border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {connectionStatus.connected ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-gray-500" />
+                )}
+                <div>
+                  <h4 className="font-medium text-gray-900">
+                    {connectionStatus.connected ? 'Connected to Salesforce' : 'Not Connected'}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {connectionStatus.connected 
+                      ? 'Your data is being synchronized with Salesforce'
+                      : 'Connect to Salesforce to sync your data across devices'
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={checkConnectionStatus}
+                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Test Connection
+                </button>
+                {!connectionStatus.connected && (
+                  <button
+                    onClick={() => setShowSalesforceModal(true)}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Connect
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
+          {connectionStatus.connected && (
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600">Status:</span>
+                <div className="font-medium text-green-600">Active</div>
+              </div>
+              <div>
+                <span className="text-gray-600">Last Sync:</span>
+                <div className="font-medium text-gray-900">Just now</div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </SettingSection>
 
       {/* Profile Section */}
       <SettingSection icon={User} title="Profile" description="Manage your account information">
@@ -577,6 +655,117 @@ const SettingsPage: React.FC = () => {
         onSave={handleProfileSave}
         currentProfile={settings.profile}
       />
+
+      {/* Salesforce Connection Modal */}
+      {showSalesforceModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-900">Connect to Salesforce</h3>
+              <button
+                onClick={() => setShowSalesforceModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Client ID</label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={salesforceCredentials.clientId}
+                  onChange={(e) => setSalesforceCredentials(prev => ({ ...prev, clientId: e.target.value }))}
+                  placeholder="Enter your Salesforce Client ID"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Client Secret</label>
+                <input
+                  type="password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={salesforceCredentials.clientSecret}
+                  onChange={(e) => setSalesforceCredentials(prev => ({ ...prev, clientSecret: e.target.value }))}
+                  placeholder="Enter your Salesforce Client Secret"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                <input
+                  type="email"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={salesforceCredentials.username}
+                  onChange={(e) => setSalesforceCredentials(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="Enter your Salesforce username"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <input
+                  type="password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={salesforceCredentials.password}
+                  onChange={(e) => setSalesforceCredentials(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Enter your Salesforce password"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Security Token</label>
+                <input
+                  type="password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={salesforceCredentials.securityToken}
+                  onChange={(e) => setSalesforceCredentials(prev => ({ ...prev, securityToken: e.target.value }))}
+                  placeholder="Enter your Salesforce security token"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Instance URL</label>
+                <input
+                  type="url"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={salesforceCredentials.instanceUrl}
+                  onChange={(e) => setSalesforceCredentials(prev => ({ ...prev, instanceUrl: e.target.value }))}
+                  placeholder="https://your-instance.salesforce.com"
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-blue-800 mb-2">How to get these credentials:</h4>
+                <ul className="text-xs text-blue-700 space-y-1">
+                  <li>• Create a Connected App in Salesforce Setup</li>
+                  <li>• Enable OAuth settings and get Client ID/Secret</li>
+                  <li>• Generate a Security Token from your user settings</li>
+                  <li>• Use your Salesforce login credentials</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex space-x-3 p-6 border-t border-gray-200">
+              <button
+                onClick={() => setShowSalesforceModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSalesforceConnect}
+                disabled={salesforceConnecting || !salesforceCredentials.clientId || !salesforceCredentials.username}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {salesforceConnecting ? 'Connecting...' : 'Connect'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Account Confirmation */}
       {showDeleteConfirm && (

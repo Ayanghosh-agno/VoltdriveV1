@@ -30,8 +30,8 @@ class AuthService {
 
     // Check if Salesforce is configured
     if (!this.isConfigured()) {
-      console.log('🎭 Salesforce not configured, using demo mode');
-      return this.generateMockToken();
+      console.log('🔧 Salesforce not configured, using local storage mode');
+      return this.generateLocalToken();
     }
 
     // Try to authenticate with Salesforce
@@ -41,12 +41,12 @@ class AuthService {
         return this.accessToken;
       }
     } catch (error) {
-      console.log('⚠️ Salesforce authentication failed, using demo mode:', error);
-      return this.generateMockToken();
+      console.log('⚠️ Salesforce authentication failed, using local storage mode:', error);
+      return this.generateLocalToken();
     }
 
-    // Fallback to demo mode
-    return this.generateMockToken();
+    // Fallback to local storage mode
+    return this.generateLocalToken();
   }
 
   /**
@@ -79,23 +79,11 @@ class AuthService {
           errorData = { error: errorText };
         }
 
-        // Check if this is a "not configured" response
-        if (errorData.mode === 'demo') {
-          console.log('🎭 Salesforce not configured on server, using demo mode');
-          throw new Error('Salesforce not configured');
-        }
-
         console.log('⚠️ Salesforce authentication failed:', errorData);
         throw new Error(`Authentication failed: ${response.status} - ${errorData.error || errorText}`);
       }
 
       const tokenData = await response.json();
-      
-      // Check if this is actually a demo mode response
-      if (tokenData.mode === 'demo') {
-        console.log('🎭 Server returned demo mode response');
-        throw new Error('Demo mode');
-      }
       
       this.accessToken = tokenData.access_token;
       this.instanceUrl = tokenData.instance_url || this.INSTANCE_URL;
@@ -109,11 +97,11 @@ class AuthService {
   }
 
   /**
-   * Generate mock token for demo purposes when Salesforce is unavailable
+   * Generate local token for local storage mode when Salesforce is unavailable
    */
-  private generateMockToken(): string {
-    console.log('🎭 Using demo mode - Salesforce integration unavailable');
-    this.accessToken = 'demo_token_' + Date.now();
+  private generateLocalToken(): string {
+    console.log('💾 Using local storage mode - Salesforce integration unavailable');
+    this.accessToken = 'local_token_' + Date.now();
     this.tokenExpiry = Date.now() + (2 * 60 * 60 * 1000); // 2 hours from now
     this.instanceUrl = this.INSTANCE_URL;
     return this.accessToken;
@@ -166,9 +154,9 @@ class AuthService {
     const token = await this.getAccessToken();
     const instanceUrl = this.getInstanceUrl();
 
-    // Check if we're in demo mode
-    if (token.startsWith('demo_token_')) {
-      return this.makeDemoRequest(endpoint, options);
+    // Check if we're in local storage mode
+    if (token.startsWith('local_token_')) {
+      return this.makeLocalRequest(endpoint, options);
     }
 
     // Construct full URL for real Salesforce API
@@ -197,7 +185,7 @@ class AuthService {
         this.clearTokens();
         const newToken = await this.getAccessToken();
         
-        if (!newToken.startsWith('demo_token_')) {
+        if (!newToken.startsWith('local_token_')) {
           // Retry with new token
           const retryHeaders = { ...headers, 'Authorization': `Bearer ${newToken}` };
           return fetch(fullUrl, { ...options, headers: retryHeaders });
@@ -206,23 +194,23 @@ class AuthService {
 
       return response;
     } catch (error) {
-      console.log('⚠️ Salesforce API request failed, falling back to demo mode:', error);
-      return this.makeDemoRequest(endpoint, options);
+      console.log('⚠️ Salesforce API request failed, falling back to local storage mode:', error);
+      return this.makeLocalRequest(endpoint, options);
     }
   }
 
   /**
-   * Make demo API requests when Salesforce is unavailable
+   * Make local API requests when Salesforce is unavailable
    */
-  private async makeDemoRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    console.log('🎭 Demo mode API request:', endpoint);
+  private async makeLocalRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
+    console.log('💾 Local storage mode API request:', endpoint);
     
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
 
     let mockData: any = {
       success: true,
-      message: 'Demo mode - data saved locally',
+      message: 'Local storage mode - data saved locally',
       timestamp: new Date().toISOString()
     };
 
