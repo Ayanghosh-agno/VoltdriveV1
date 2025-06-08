@@ -50,7 +50,7 @@ class AuthService {
     try {
       console.log('🔐 Authenticating with Salesforce automatically...');
       
-      const response = await fetch('/.netlify/functions/salesforce-auth/services/oauth2/token', {
+      const response = await fetch('/salesforce-auth/services/oauth2/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -149,7 +149,7 @@ class AuthService {
     // Construct full URL for real Salesforce API
     const fullUrl = endpoint.startsWith('http') 
       ? endpoint 
-      : `/.netlify/functions/salesforce-api${endpoint}`;
+      : `/salesforce-api${endpoint}`;
 
     const headers = {
       'Authorization': `Bearer ${token}`,
