@@ -31,6 +31,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </h1>
                 <p className="text-xs text-gray-500">Smart Driving Analytics</p>
               </div>
+              {/* Sticker Image */}
+              <div className="ml-2">
+                <img 
+                  src="/black_circle_360x360.png" 
+                  alt="VoltRide Sticker" 
+                  className="h-8 w-8 object-contain"
+                />
+              </div>
             </div>
             
             <nav className="hidden md:flex space-x-1">
