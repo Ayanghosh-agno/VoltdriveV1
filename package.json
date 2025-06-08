@@ -3,10 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite --port 3000",
+    "dev": "netlify dev",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "vite:dev": "vite --port 3000",
     "netlify:dev": "netlify dev",
     "netlify:build": "npm run build",
     "netlify:deploy": "netlify deploy --prod --dir=dist"
