@@ -55,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               })}
             </nav>
 
-            {/* Mobile Bolt Attribution - Small size */}
+            {/* Mobile Bolt Attribution - 50px x 50px */}
             <div className="md:hidden">
               <a
                 href="https://bolt.new"
@@ -66,7 +66,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <img 
                   src="/black_circle_360x360.png" 
                   alt="Bolt.new" 
-                  className="w-8 h-8 rounded-full hover:scale-110 transition-transform duration-200"
+                  className="rounded-full hover:scale-110 transition-transform duration-200"
+                  style={{ width: '50px', height: '50px', minWidth: '50px', minHeight: '50px' }}
                 />
               </a>
             </div>
