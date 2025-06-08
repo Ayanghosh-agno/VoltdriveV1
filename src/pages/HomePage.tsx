@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, Fuel, Clock, Shield, AlertTriangle, Award, Star, Gift } from 'lucide-react';
+import { TrendingUp, Fuel, Clock, Shield, AlertTriangle, Award } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import ProgressRing from '../components/ProgressRing';
 import RecentTrips from '../components/RecentTrips';
@@ -84,60 +84,6 @@ const HomePage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Special Feature Banner with Sticker */}
-      <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-3xl p-8 text-white shadow-2xl overflow-hidden">
-        <div className="absolute top-4 right-4 z-10">
-          <img 
-            src="/black_circle_360x360.png" 
-            alt="VoltRide Premium Feature" 
-            className="h-20 w-20 object-contain animate-pulse cursor-pointer hover:scale-110 transition-transform duration-300"
-            onClick={() => {
-              alert('🎉 Premium VoltRide Features Coming Soon!');
-            }}
-          />
-        </div>
-        
-        <div className="relative z-10">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="bg-white/20 p-3 rounded-full">
-              <Star className="h-8 w-8 text-yellow-300" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold">Premium Analytics Unlocked!</h3>
-              <p className="text-purple-100">Advanced AI insights and personalized coaching</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Gift className="h-5 w-5 text-yellow-300" />
-                <span className="font-semibold">AI Coach</span>
-              </div>
-              <p className="text-sm text-purple-100">Real-time driving tips</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-green-300" />
-                <span className="font-semibold">Predictive Analytics</span>
-              </div>
-              <p className="text-sm text-purple-100">Fuel cost predictions</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Shield className="h-5 w-5 text-blue-300" />
-                <span className="font-semibold">Safety Alerts</span>
-              </div>
-              <p className="text-sm text-purple-100">Advanced warnings</p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Decorative background elements */}
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-xl"></div>
-        <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-white/5 rounded-full blur-2xl"></div>
       </div>
 
       {/* Performance Overview */}

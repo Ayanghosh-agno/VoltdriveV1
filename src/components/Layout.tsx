@@ -33,7 +33,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </div>
             
-            <nav className="hidden md:flex space-x-1">
+            {/* Navigation with integrated sticker */}
+            <nav className="hidden md:flex items-center space-x-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -52,6 +53,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </Link>
                 );
               })}
+              
+              {/* Premium Status with Sticker */}
+              <div className="relative ml-4">
+                <button 
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  onClick={() => {
+                    alert('🎉 VoltRide Premium Features - Advanced Analytics & AI Coaching!');
+                  }}
+                >
+                  <img 
+                    src="/black_circle_360x360.png" 
+                    alt="Premium" 
+                    className="h-5 w-5 object-contain"
+                  />
+                  <span className="font-medium text-sm">Premium</span>
+                </button>
+                
+                {/* Subtle glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur-lg opacity-30 -z-10"></div>
+              </div>
             </nav>
           </div>
         </div>
@@ -83,6 +104,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Link>
             );
           })}
+          
+          {/* Mobile Premium Button */}
+          <button 
+            className="flex flex-col items-center space-y-1 px-3 py-2 rounded-xl text-purple-600 hover:bg-purple-50 transition-all duration-200"
+            onClick={() => {
+              alert('🎉 VoltRide Premium Features!');
+            }}
+          >
+            <img 
+              src="/black_circle_360x360.png" 
+              alt="Premium" 
+              className="h-5 w-5 object-contain"
+            />
+            <span className="text-xs font-medium">Premium</span>
+          </button>
         </div>
       </nav>
     </div>
