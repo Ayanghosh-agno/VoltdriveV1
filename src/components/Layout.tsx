@@ -57,32 +57,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </header>
 
-      {/* Floating Attention-Grabbing Sticker */}
-      <div className="fixed top-20 right-6 z-50 animate-bounce">
-        <div className="relative">
-          {/* Pulsing background effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full animate-ping opacity-75"></div>
-          
-          {/* Main sticker container */}
-          <div className="relative bg-white rounded-full p-2 shadow-2xl border-4 border-gradient-to-r from-blue-500 to-purple-600">
-            <img 
-              src="/black_circle_360x360.png" 
-              alt="VoltRide Special Offer" 
-              className="h-16 w-16 object-contain hover:scale-110 transition-transform duration-300 cursor-pointer"
-              onClick={() => {
-                // Add click handler for special action
-                alert('🎉 Special VoltRide Feature Unlocked!');
-              }}
-            />
-          </div>
-          
-          {/* Notification badge */}
-          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
-            !
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
