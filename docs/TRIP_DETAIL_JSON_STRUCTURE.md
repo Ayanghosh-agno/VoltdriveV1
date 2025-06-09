@@ -64,17 +64,16 @@ This document specifies the exact JSON structure that your Salesforce API should
       "environmental": 78       // Environmental component score (0-100)
     },
     
-    // Penalties Applied (from your Apex calculation)
+    // Penalties Applied (ARRAY FORMAT as requested)
     "penalties": {
-      "speedingPenalty": 5,     // Points deducted for speeding
-      "harshEventsPenalty": 15, // Points deducted for harsh events
-      "idlingPenalty": 10       // Points deducted for excessive idling
+      "descriptions": ["Harsh Acceleration", "High CO₂ emission", "Excessive Idling"],
+      "points": [10, 10, 5]
     },
     
-    // Bonuses Applied (from your Apex calculation)
+    // Bonuses Applied (ARRAY FORMAT as requested)
     "bonuses": {
-      "fuelEfficiencyBonus": 8, // Points added for good fuel efficiency
-      "smoothnessBonus": 5      // Points added for smooth driving
+      "descriptions": ["Fuel efficiency above average", "Low CO₂ emissions", "Smooth driving"],
+      "points": [20, 20, 15]
     },
     
     // AI-Generated Insights (from your Apex calculation)
@@ -118,6 +117,132 @@ This document specifies the exact JSON structure that your Salesforce API should
 }
 ```
 
+## Penalties & Bonuses Array Format
+
+### Penalties Structure:
+```json
+"penalties": {
+  "descriptions": [
+    "Harsh Acceleration",
+    "High CO₂ emission", 
+    "Excessive Idling",
+    "Speed Violations",
+    "Harsh Braking"
+  ],
+  "points": [10, 10, 5, 15, 8]
+}
+```
+
+### Bonuses Structure:
+```json
+"bonuses": {
+  "descriptions": [
+    "Fuel efficiency above average",
+    "Low CO₂ emissions",
+    "Smooth driving",
+    "Consistent speed",
+    "No harsh events"
+  ],
+  "points": [20, 20, 15, 10, 5]
+}
+```
+
+## Example Apex Implementation for Penalties/Bonuses
+
+```apex
+public class TripScoreCalculator {
+    
+    public static Map<String, Object> calculatePenaltiesAndBonuses(TripData trip, VehicleSettings vehicle) {
+        List<String> penaltyDescriptions = new List<String>();
+        List<Integer> penaltyPoints = new List<Integer>();
+        List<String> bonusDescriptions = new List<String>();
+        List<Integer> bonusPoints = new List<Integer>();
+        
+        // Calculate penalties
+        if (trip.harshAcceleration > 0) {
+            penaltyDescriptions.add('Harsh Acceleration');
+            penaltyPoints.add(trip.harshAcceleration * 5);
+        }
+        
+        if (trip.harshBraking > 0) {
+            penaltyDescriptions.add('Harsh Braking');
+            penaltyPoints.add(trip.harshBraking * 5);
+        }
+        
+        if (trip.overSpeeding > 60) { // More than 1 minute
+            penaltyDescriptions.add('Speed Violations');
+            penaltyPoints.add(15);
+        }
+        
+        if (trip.idling > 300) { // More than 5 minutes
+            penaltyDescriptions.add('Excessive Idling');
+            penaltyPoints.add(10);
+        }
+        
+        // Calculate CO2 emissions penalty
+        Decimal co2Emitted = trip.fuelUsed * 2.31; // kg CO2 per liter
+        Decimal co2Threshold = trip.distance * 0.12; // 120g per km threshold
+        if (co2Emitted > co2Threshold) {
+            penaltyDescriptions.add('High CO₂ emission');
+            penaltyPoints.add(10);
+        }
+        
+        // Calculate bonuses
+        Decimal actualEfficiency = trip.distance / trip.fuelUsed;
+        if (actualEfficiency > vehicle.averageMileage * 1.1) { // 10% better than claimed
+            bonusDescriptions.add('Fuel efficiency above average');
+            bonusPoints.add(20);
+        }
+        
+        if (co2Emitted <= co2Threshold * 0.9) { // 10% below threshold
+            bonusDescriptions.add('Low CO₂ emissions');
+            bonusPoints.add(20);
+        }
+        
+        if (trip.harshAcceleration + trip.harshBraking == 0) {
+            bonusDescriptions.add('Smooth driving');
+            bonusPoints.add(15);
+        }
+        
+        if (trip.overSpeeding == 0) {
+            bonusDescriptions.add('Speed compliance');
+            bonusPoints.add(10);
+        }
+        
+        // Return in the required format
+        Map<String, Object> result = new Map<String, Object>();
+        result.put('penalties', new Map<String, Object>{
+            'descriptions' => penaltyDescriptions,
+            'points' => penaltyPoints
+        });
+        result.put('bonuses', new Map<String, Object>{
+            'descriptions' => bonusDescriptions,
+            'points' => bonusPoints
+        });
+        
+        return result;
+    }
+}
+```
+
+## Frontend Usage
+
+The frontend will display penalties and bonuses like this:
+
+```typescript
+// Display penalties
+tripData.penalties.descriptions.forEach((description, index) => {
+  const points = tripData.penalties.points[index];
+  console.log(`Penalty: ${description} (-${points} points)`);
+});
+
+// Display bonuses
+tripData.bonuses.descriptions.forEach((description, index) => {
+  const points = tripData.bonuses.points[index];
+  console.log(`Bonus: ${description} (+${points} points)`);
+});
+```
+
 ## Required vs Optional Fields
 
 ### ✅ **Required Fields** (Must be present):
@@ -142,7 +267,7 @@ This document specifies the exact JSON structure that your Salesforce API should
 - `startLocation` / `endLocation` - GPS coordinates and addresses
 - `route` - Array of GPS coordinates for route visualization
 - `scoreBreakdown` - Detailed component scores
-- `penalties` / `bonuses` - Score calculation details
+- `penalties` / `bonuses` - Score calculation details in array format
 - `insights` - AI-generated driving tips
 - `weatherCondition` / `timeOfDay` / `roadType` / `trafficCondition` - Context data
 - `detailedData` - OBD-II sensor readings over time
@@ -182,28 +307,4 @@ If trip is not found or there's an error:
 }
 ```
 
-## Frontend Usage
-
-The frontend will:
-
-1. **Call the API** when user clicks on a trip or navigates to `/trips/{tripId}`
-2. **Display trip overview** using basic metrics (distance, duration, fuel, score)
-3. **Show route on map** using `startLocation`, `endLocation`, and `route` coordinates
-4. **Render score breakdown** using `scoreBreakdown`, `penalties`, and `bonuses`
-5. **Display insights** using the `insights` array
-6. **Show analytics charts** using `detailedData` profiles (speed, RPM, throttle, engine load)
-7. **Calculate environmental impact** using `environmentalImpact` data
-
-## Implementation Notes
-
-1. **Score Calculation**: Use the Apex implementation from the driving score documentation to calculate `calculatedScore`, `scoreBreakdown`, `penalties`, `bonuses`, and `insights`.
-
-2. **Route Data**: If you don't have detailed route coordinates, you can provide just start and end locations. The map will show a straight line between them.
-
-3. **Detailed Profiles**: The `speedProfile`, `rpmProfile`, etc. are arrays of sensor readings taken at regular intervals during the trip. If not available, the frontend will show placeholder charts.
-
-4. **Error Handling**: Always return proper error responses with meaningful messages when trips are not found or there are system errors.
-
-5. **Performance**: For trips with large amounts of sensor data, consider pagination or data compression to keep response times reasonable.
-
-This structure provides all the data needed for a comprehensive trip detail view with maps, charts, scores, and insights! 🚗📊
+This structure provides all the data needed for a comprehensive trip detail view with the penalties and bonuses in your preferred array format! 🚗📊
