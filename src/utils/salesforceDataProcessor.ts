@@ -46,14 +46,14 @@ export class SalesforceDataProcessor {
    */
   private static createUserBaselinesFromSettings(settings: AppSettings): UserBaselines {
     return {
-      averageFuelEfficiency: parseFloat(settings.vehicle.averageMileage),
+      averageFuelEfficiency: parseFloat(settings.vehicle.averageMileage) || 15.0,
       targetFuelEfficiency: 15.0, // Industry standard km/l
       fuelCostPerLiter: settings.vehicle.fuelType === 'Petrol' ? 102 : 89, // ₹ per liter
       vehicleType: settings.vehicle.fuelType.toLowerCase() as 'petrol' | 'diesel' | 'electric',
-      speedThreshold: parseFloat(settings.vehicle.speedThreshold),
-      harshAccelThreshold: parseFloat(settings.vehicle.harshAccelThreshold),
-      harshBrakeThreshold: parseFloat(settings.vehicle.harshBrakeThreshold),
-      revThreshold: parseFloat(settings.vehicle.revThreshold),
+      speedThreshold: parseFloat(settings.vehicle.speedThreshold) || 80,
+      harshAccelThreshold: parseFloat(settings.vehicle.harshAccelThreshold) || 3.5,
+      harshBrakeThreshold: parseFloat(settings.vehicle.harshBrakeThreshold) || 4.0,
+      revThreshold: parseFloat(settings.vehicle.revThreshold) || 3500,
     };
   }
   
@@ -76,17 +76,19 @@ export class SalesforceDataProcessor {
       
       // Harsh events penalty
       const totalHarshEvents = trip.harshAcceleration + trip.harshBraking;
-      const eventsPerKm = totalHarshEvents / trip.distance;
+      const eventsPerKm = trip.distance > 0 ? totalHarshEvents / trip.distance : 0;
       if (eventsPerKm > 1.0) tripScore -= 35;
       else if (eventsPerKm > 0.5) tripScore -= 25;
       else if (eventsPerKm > 0.3) tripScore -= 15;
       else if (eventsPerKm > 0.1) tripScore -= 5;
       
       // Fuel efficiency bonus/penalty
-      const tripEfficiency = trip.distance / trip.fuelUsed;
-      const efficiencyRatio = tripEfficiency / userBaselines.targetFuelEfficiency;
-      if (efficiencyRatio > 1.2) tripScore += 10;
-      else if (efficiencyRatio < 0.8) tripScore -= 15;
+      if (trip.fuelUsed > 0 && trip.distance > 0) {
+        const tripEfficiency = trip.distance / trip.fuelUsed;
+        const efficiencyRatio = tripEfficiency / userBaselines.targetFuelEfficiency;
+        if (efficiencyRatio > 1.2) tripScore += 10;
+        else if (efficiencyRatio < 0.8) tripScore -= 15;
+      }
       
       // Idling penalty
       const idlingPercentage = (trip.idling / (trip.duration * 60)) * 100;
@@ -104,7 +106,31 @@ export class SalesforceDataProcessor {
    * Calculate fuel efficiency score (0-100)
    */
   private static calculateFuelEfficiencyScore(currentWeek: WeeklyTripInsight, userBaselines: UserBaselines): number {
-    const ratio = currentWeek.actualFuelEfficiency / userBaselines.targetFuelEfficiency;
+    // Handle edge cases for fuel efficiency calculation
+    if (!currentWeek.totalFuelUsed || currentWeek.totalFuelUsed <= 0 || 
+        !currentWeek.totalDistance || currentWeek.totalDistance <= 0) {
+      console.warn('Invalid fuel or distance data for efficiency calculation');
+      return 50; // Return neutral score
+    }
+    
+    // Check if actualFuelEfficiency is provided and valid
+    let actualEfficiency: number;
+    if (currentWeek.actualFuelEfficiency && 
+        !isNaN(currentWeek.actualFuelEfficiency) && 
+        currentWeek.actualFuelEfficiency > 0) {
+      actualEfficiency = currentWeek.actualFuelEfficiency;
+    } else {
+      // Calculate from totalDistance / totalFuelUsed
+      actualEfficiency = currentWeek.totalDistance / currentWeek.totalFuelUsed;
+    }
+    
+    // Validate calculated efficiency
+    if (!actualEfficiency || isNaN(actualEfficiency) || actualEfficiency <= 0) {
+      console.warn('Invalid calculated fuel efficiency:', actualEfficiency);
+      return 50; // Return neutral score
+    }
+    
+    const ratio = actualEfficiency / userBaselines.targetFuelEfficiency;
     
     if (ratio >= 1.3) return 100;      // 30% better than target
     if (ratio >= 1.2) return 90;       // 20% better
@@ -134,7 +160,7 @@ export class SalesforceDataProcessor {
       
       // Harsh driving events
       const totalHarshEvents = trip.harshAcceleration + trip.harshBraking;
-      const eventsPerKm = totalHarshEvents / trip.distance;
+      const eventsPerKm = trip.distance > 0 ? totalHarshEvents / trip.distance : 0;
       if (eventsPerKm > 1.0) safetyScore -= 40;
       else if (eventsPerKm > 0.5) safetyScore -= 30;
       else if (eventsPerKm > 0.3) safetyScore -= 20;
@@ -159,15 +185,21 @@ export class SalesforceDataProcessor {
     previousWeek: WeeklyTripInsight, 
     userBaselines: UserBaselines
   ) {
-    // Calculate fuel savings in ₹
-    const expectedFuel = currentWeek.totalDistance / userBaselines.targetFuelEfficiency;
-    const actualFuel = currentWeek.totalFuelUsed;
-    const fuelSaved = Math.max(0, expectedFuel - actualFuel);
-    const moneySaved = fuelSaved * userBaselines.fuelCostPerLiter;
+    // Calculate fuel savings in ₹ with proper validation
+    let currentFuelSaved = 0;
+    let previousFuelSaved = 0;
     
-    const previousExpectedFuel = previousWeek.totalDistance / userBaselines.targetFuelEfficiency;
-    const previousActualFuel = previousWeek.totalFuelUsed;
-    const previousFuelSaved = Math.max(0, previousExpectedFuel - previousActualFuel);
+    if (currentWeek.totalDistance > 0 && currentWeek.totalFuelUsed > 0) {
+      const expectedFuel = currentWeek.totalDistance / userBaselines.targetFuelEfficiency;
+      currentFuelSaved = Math.max(0, expectedFuel - currentWeek.totalFuelUsed);
+    }
+    
+    if (previousWeek.totalDistance > 0 && previousWeek.totalFuelUsed > 0) {
+      const previousExpectedFuel = previousWeek.totalDistance / userBaselines.targetFuelEfficiency;
+      previousFuelSaved = Math.max(0, previousExpectedFuel - previousWeek.totalFuelUsed);
+    }
+    
+    const moneySaved = currentFuelSaved * userBaselines.fuelCostPerLiter;
     const previousMoneySaved = previousFuelSaved * userBaselines.fuelCostPerLiter;
     
     return {
@@ -197,11 +229,20 @@ export class SalesforceDataProcessor {
    * Calculate percentage change between two values
    */
   private static calculateChange(current: number, previous: number): string {
-    if (previous === 0) {
+    if (!previous || previous === 0) {
       return current > 0 ? "+100%" : "0%";
     }
     
+    if (!current || isNaN(current) || !isFinite(current)) {
+      return "0%";
+    }
+    
     const change = ((current - previous) / previous) * 100;
+    
+    if (!isFinite(change) || isNaN(change)) {
+      return "0%";
+    }
+    
     const sign = change >= 0 ? "+" : "";
     return `${sign}${Math.round(change)}%`;
   }
@@ -217,8 +258,20 @@ export class SalesforceDataProcessor {
   ): Insight[] {
     const insights: Insight[] = [];
     
-    // Fuel efficiency comparison
-    const efficiencyImprovement = ((currentWeek.actualFuelEfficiency - previousWeek.actualFuelEfficiency) / previousWeek.actualFuelEfficiency) * 100;
+    // Fuel efficiency comparison - with proper validation
+    let efficiencyImprovement = 0;
+    if (currentWeek.totalFuelUsed > 0 && previousWeek.totalFuelUsed > 0 &&
+        currentWeek.totalDistance > 0 && previousWeek.totalDistance > 0) {
+      
+      const currentEfficiency = currentWeek.actualFuelEfficiency || 
+                               (currentWeek.totalDistance / currentWeek.totalFuelUsed);
+      const previousEfficiency = previousWeek.actualFuelEfficiency || 
+                                (previousWeek.totalDistance / previousWeek.totalFuelUsed);
+      
+      if (currentEfficiency > 0 && previousEfficiency > 0) {
+        efficiencyImprovement = ((currentEfficiency - previousEfficiency) / previousEfficiency) * 100;
+      }
+    }
     
     if (efficiencyImprovement > 10) {
       insights.push({
@@ -241,7 +294,8 @@ export class SalesforceDataProcessor {
     // Harsh events comparison
     const currentHarshEvents = currentWeek.totalHarshAcceleration + currentWeek.totalHarshBraking;
     const previousHarshEvents = previousWeek.totalHarshAcceleration + previousWeek.totalHarshBraking;
-    const harshEventsChange = ((currentHarshEvents - previousHarshEvents) / Math.max(1, previousHarshEvents)) * 100;
+    const harshEventsChange = previousHarshEvents > 0 ? 
+      ((currentHarshEvents - previousHarshEvents) / previousHarshEvents) * 100 : 0;
     
     if (harshEventsChange < -30) {
       insights.push({
@@ -262,10 +316,12 @@ export class SalesforceDataProcessor {
     }
     
     // Idling comparison
-    const avgIdlingCurrent = currentWeek.totalIdling / currentWeek.totalTrips / 60; // minutes per trip
-    const avgIdlingPrevious = previousWeek.totalIdling / previousWeek.totalTrips / 60;
+    const avgIdlingCurrent = currentWeek.totalTrips > 0 ? 
+      currentWeek.totalIdling / currentWeek.totalTrips / 60 : 0; // minutes per trip
+    const avgIdlingPrevious = previousWeek.totalTrips > 0 ? 
+      previousWeek.totalIdling / previousWeek.totalTrips / 60 : 0;
     
-    if (avgIdlingCurrent > 3 && avgIdlingCurrent > avgIdlingPrevious * 1.2) {
+    if (avgIdlingCurrent > 3 && avgIdlingPrevious > 0 && avgIdlingCurrent > avgIdlingPrevious * 1.2) {
       insights.push({
         type: 'tip',
         icon: 'clock',
@@ -276,7 +332,8 @@ export class SalesforceDataProcessor {
     }
     
     // Speed consistency insight
-    const speedImprovement = ((currentWeek.avgSpeed - previousWeek.avgSpeed) / previousWeek.avgSpeed) * 100;
+    const speedImprovement = previousWeek.avgSpeed > 0 ? 
+      ((currentWeek.avgSpeed - previousWeek.avgSpeed) / previousWeek.avgSpeed) * 100 : 0;
     if (Math.abs(speedImprovement) < 5 && currentHarshEvents < previousHarshEvents) {
       insights.push({
         type: 'positive',
@@ -300,8 +357,9 @@ export class SalesforceDataProcessor {
   ) {
     // Safety score (based on harsh events and speeding)
     const totalHarshEvents = currentWeek.totalHarshAcceleration + currentWeek.totalHarshBraking;
-    const harshEventsPerKm = totalHarshEvents / currentWeek.totalDistance;
-    const speedingPercentage = (currentWeek.totalOverSpeeding / (currentWeek.totalDuration * 60)) * 100;
+    const harshEventsPerKm = currentWeek.totalDistance > 0 ? totalHarshEvents / currentWeek.totalDistance : 0;
+    const speedingPercentage = currentWeek.totalDuration > 0 ? 
+      (currentWeek.totalOverSpeeding / (currentWeek.totalDuration * 60)) * 100 : 0;
     
     let safety = 100;
     if (harshEventsPerKm > 1.0) safety -= 40;
@@ -325,12 +383,14 @@ export class SalesforceDataProcessor {
     
     // Environmental score (based on idling and over-revving)
     let environmental = 100;
-    const avgIdlingPercentage = (currentWeek.totalIdling / (currentWeek.totalDuration * 60)) * 100;
+    const avgIdlingPercentage = currentWeek.totalDuration > 0 ? 
+      (currentWeek.totalIdling / (currentWeek.totalDuration * 60)) * 100 : 0;
     if (avgIdlingPercentage > 20) environmental -= 30;
     else if (avgIdlingPercentage > 10) environmental -= 15;
     else if (avgIdlingPercentage > 5) environmental -= 5;
     
-    const avgOverRevTime = currentWeek.totalOverRevving / currentWeek.totalTrips;
+    const avgOverRevTime = currentWeek.totalTrips > 0 ? 
+      currentWeek.totalOverRevving / currentWeek.totalTrips : 0;
     if (avgOverRevTime > 60) environmental -= 25;
     else if (avgOverRevTime > 30) environmental -= 15;
     else if (avgOverRevTime > 10) environmental -= 5;
