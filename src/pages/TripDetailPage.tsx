@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, Fuel, Gauge, AlertTriangle, TrendingUp, Zap, TreePine, Route, WifiOff, RefreshCw } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Fuel, Gauge, AlertTriangle, TrendingUp, Zap, TreePine, Router as Route, WifiOff, RefreshCw } from 'lucide-react';
 import TripMap from '../components/TripMap';
 import AnalyticsChart from '../components/AnalyticsChart';
 import AIAdvice from '../components/AIAdvice';
@@ -191,7 +191,7 @@ const TripDetailPage: React.FC = () => {
     return (
       <div className="space-y-6 pb-20 md:pb-8">
         <div className="flex items-center space-x-4">
-          <Link to="/trips" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link to="/trips\" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Link>
           <div className="flex-1">
