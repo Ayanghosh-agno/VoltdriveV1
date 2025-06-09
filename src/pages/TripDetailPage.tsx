@@ -5,7 +5,6 @@ import TripMap from '../components/TripMap';
 import AnalyticsChart from '../components/AnalyticsChart';
 import AIAdvice from '../components/AIAdvice';
 import ScoreBreakdown from '../components/ScoreBreakdown';
-import { DrivingScoreCalculator, mockTripData } from '../utils/scoreCalculation';
 import { useSalesforceData } from '../hooks/useSalesforceData';
 
 const TripDetailPage: React.FC = () => {
@@ -73,8 +72,24 @@ const TripDetailPage: React.FC = () => {
     return Math.max(60, Math.min(100, Math.round(score)));
   };
 
-  // Calculate detailed score breakdown
-  const scoreBreakdown = DrivingScoreCalculator.calculateDrivingScore(mockTripData);
+  // Prepare trip data for score breakdown calculation
+  const tripScoreInput = React.useMemo(() => {
+    if (!tripData) return null;
+    
+    return {
+      distance: tripData.distance,
+      duration: tripData.duration,
+      fuelUsed: tripData.fuelUsed,
+      avgSpeed: tripData.avgSpeed,
+      maxSpeed: tripData.maxSpeed,
+      harshAcceleration: tripData.events.harshAcceleration,
+      harshBraking: tripData.events.harshBraking,
+      overSpeeding: tripData.events.overSpeeding,
+      idling: tripData.events.idling,
+      overRevving: tripData.events.overRevving,
+      calculatedScore: tripData.score // Use Salesforce score if available
+    };
+  }, [tripData]);
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-green-600 bg-green-50 border-green-200';
@@ -143,7 +158,7 @@ const TripDetailPage: React.FC = () => {
   }
 
   // Show trip not found
-  if (!tripData) {
+  if (!tripData || !tripScoreInput) {
     return (
       <div className="space-y-6 pb-20 md:pb-8">
         <div className="flex items-center space-x-4">
@@ -201,8 +216,8 @@ const TripDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Score Breakdown */}
-      <ScoreBreakdown scoreData={scoreBreakdown} />
+      {/* Score Breakdown - Now calculated in frontend */}
+      <ScoreBreakdown tripData={tripScoreInput} />
 
       {/* Trip Overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">

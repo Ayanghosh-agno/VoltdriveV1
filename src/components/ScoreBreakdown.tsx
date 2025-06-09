@@ -1,13 +1,26 @@
 import React from 'react';
 import { Shield, Fuel, Activity, Leaf, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { ScoreBreakdown as ScoreData } from '../utils/scoreCalculation';
+import { FrontendScoreCalculator, TripScoreInput, VehicleBaselines } from '../utils/frontendScoreCalculator';
+import { useSettings } from '../hooks/useSettings';
 
 interface ScoreBreakdownProps {
-  scoreData: ScoreData;
+  tripData: TripScoreInput;
   className?: string;
 }
 
-const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ scoreData, className = '' }) => {
+const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ tripData, className = '' }) => {
+  const { settings } = useSettings();
+  
+  // Create vehicle baselines from settings
+  const vehicleBaselines: VehicleBaselines = {
+    averageMileage: parseFloat(settings.vehicle.averageMileage) || 15.0,
+    speedThreshold: parseFloat(settings.vehicle.speedThreshold) || 80,
+    fuelType: settings.vehicle.fuelType as 'Petrol' | 'Diesel' | 'Electric'
+  };
+  
+  // Calculate score breakdown in frontend
+  const scoreData = FrontendScoreCalculator.calculateScoreBreakdown(tripData, vehicleBaselines);
+
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-green-600 bg-green-50 border-green-200';
     if (score >= 80) return 'text-blue-600 bg-blue-50 border-blue-200';
@@ -35,7 +48,7 @@ const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ scoreData, className = 
       name: 'Efficiency',
       score: scoreData.efficiency,
       icon: Fuel,
-      description: 'Fuel consumption and eco-driving'
+      description: 'Fuel consumption vs vehicle specifications'
     },
     {
       name: 'Smoothness',
@@ -120,6 +133,16 @@ const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ scoreData, className = 
             <span className="text-gray-600">Speed Consistency:</span>
             <span className="font-medium text-blue-600">{scoreData.breakdown.speedConsistencyScore} pts</span>
           </div>
+        </div>
+      </div>
+
+      {/* Vehicle Baseline Info */}
+      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <h5 className="text-sm font-medium text-blue-800 mb-1">Calculation Baseline</h5>
+        <div className="text-xs text-blue-700 space-y-1">
+          <div>Vehicle Claimed Mileage: {vehicleBaselines.averageMileage} km/l</div>
+          <div>Speed Threshold: {vehicleBaselines.speedThreshold} km/hr</div>
+          <div>Fuel Type: {vehicleBaselines.fuelType}</div>
         </div>
       </div>
     </div>
