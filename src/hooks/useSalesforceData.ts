@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { SalesforceHomePageData, exampleSalesforceResponse } from '../types/salesforceData';
 import { SalesforceDataProcessor } from '../utils/salesforceDataProcessor';
 import { CalculatedMetrics } from '../utils/performanceCalculator';
+import AuthService from '../services/authService';
 
 export const useSalesforceData = () => {
   const [salesforceData, setSalesforceData] = useState<SalesforceHomePageData | null>(null);
@@ -17,13 +18,12 @@ export const useSalesforceData = () => {
     try {
       console.log('🔄 Fetching trip insights from Salesforce...');
       
-      // Call the /tripInsights endpoint
-      const response = await fetch('/salesforce-api/services/apexrest/voltride/tripInsights', {
+      // Get authenticated service instance
+      const authService = AuthService.getInstance();
+      
+      // Make authenticated request to /tripInsights endpoint
+      const response = await authService.makeAuthenticatedRequest('/services/apexrest/voltride/tripInsights', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -32,6 +32,19 @@ export const useSalesforceData = () => {
 
       const data = await response.json();
       console.log('✅ Trip insights received from Salesforce:', data);
+      
+      // Check if this is a demo mode response
+      if (data.mode === 'demo' || data.success === false) {
+        console.log('🔄 Demo mode detected, using example data...');
+        const fallbackData = exampleSalesforceResponse;
+        setSalesforceData(fallbackData);
+        
+        const metrics = SalesforceDataProcessor.processHomePageData(fallbackData);
+        setPerformanceMetrics(metrics);
+        
+        setError('Running in demo mode - Salesforce integration not available');
+        return;
+      }
       
       // Validate the data structure
       if (!data.currentWeekTripInsight || !data.previousWeekTripInsight || !data.recentTrips) {
