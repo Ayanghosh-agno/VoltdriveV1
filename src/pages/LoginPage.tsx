@@ -113,7 +113,24 @@ const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 relative">
+      {/* Bolt.new Attribution - Fixed position */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <a
+          href="https://bolt.new"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <img 
+            src="/black_circle_360x360.png" 
+            alt="Bolt.new" 
+            className="rounded-full hover:scale-110 transition-transform duration-200 shadow-lg"
+            style={{ width: '60px', height: '60px', minWidth: '60px', minHeight: '60px' }}
+          />
+        </a>
+      </div>
+
       <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-4xl">
         <div className="flex flex-col lg:flex-row">
           {/* Left Side - Branding */}
