@@ -36,14 +36,14 @@ This document specifies the exact JSON structure that your Salesforce API should
     
     // Route Path (GPS coordinates - FIRST = START, LAST = END)
     "route": [
-      { "lat": 19.0760, "lng": 72.8777, "address": "Bandra West, Mumbai" },      // START LOCATION
+      { "lat": 19.0760, "lng": 72.8777},      // START LOCATION
       { "lat": 19.0750, "lng": 72.8767 },
       { "lat": 19.0740, "lng": 72.8757 },
       { "lat": 19.0730, "lng": 72.8747 },
       { "lat": 19.0720, "lng": 72.8737 },
       { "lat": 19.0710, "lng": 72.8727 },
       // ... more route points
-      { "lat": 19.0176, "lng": 72.8562, "address": "Lower Parel, Mumbai" }       // END LOCATION
+      { "lat": 19.0176, "lng": 72.8562}       // END LOCATION
     ],
     
     // Detailed Score Breakdown (from your Apex calculation)
