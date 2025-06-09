@@ -31,7 +31,7 @@ const TripDetailPage: React.FC = () => {
       const authService = AuthService.getInstance();
       
       // Make authenticated request to your new endpoint
-      const response = await authService.makeAuthenticatedRequest(`/services/apexrest/voltride/tripDetail/${tripId}`, {
+      const response = await authService.makeAuthenticatedRequest(`/services/apexrest/voltride/tripDetails/${tripId}`, {
         method: 'GET',
       });
 
@@ -152,7 +152,7 @@ const TripDetailPage: React.FC = () => {
     return Math.max(60, Math.min(100, Math.round(score)));
   };
 
-  // Prepare trip data for score breakdown calculation
+  // Prepare trip data for score breakdown calculation - NOW INCLUDING SERVER DATA
   const tripScoreInput = React.useMemo(() => {
     if (!tripData) return null;
     
@@ -167,7 +167,11 @@ const TripDetailPage: React.FC = () => {
       overSpeeding: tripData.events.overSpeeding,
       idling: tripData.events.idling,
       overRevving: tripData.events.overRevving,
-      calculatedScore: tripData.score // Use Salesforce score if available
+      calculatedScore: tripData.score, // Use Salesforce score if available
+      // 🎯 PASS SERVER PENALTIES AND BONUSES
+      penalties: tripData.penalties,
+      bonuses: tripData.bonuses,
+      scoreBreakdown: tripData.scoreBreakdown
     };
   }, [tripData]);
 
@@ -193,7 +197,7 @@ const TripDetailPage: React.FC = () => {
     return (
       <div className="space-y-6 pb-20 md:pb-8">
         <div className="flex items-center space-x-4">
-          <Link to="/trips\" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link to="/trips" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Link>
           <div className="flex-1">
@@ -301,7 +305,7 @@ const TripDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Score Breakdown - Now calculated in frontend */}
+      {/* Score Breakdown - Now with server penalties and bonuses */}
       <ScoreBreakdown tripData={tripScoreInput} />
 
       {/* Trip Overview Cards - Removed Idling, now 8 cards */}
