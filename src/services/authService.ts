@@ -20,6 +20,26 @@ class AuthService {
   }
 
   /**
+   * Check if we're in development mode
+   */
+  private isDevelopment(): boolean {
+    return import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  }
+
+  /**
+   * Get the appropriate base URL for API calls
+   */
+  private getApiBaseUrl(): string {
+    if (this.isDevelopment()) {
+      // In development, use Netlify Dev proxy
+      return '';
+    } else {
+      // In production, use the deployed Netlify functions
+      return '';
+    }
+  }
+
+  /**
    * Get a valid access token, automatically authenticating if needed
    */
   async getAccessToken(): Promise<string> {
@@ -56,7 +76,11 @@ class AuthService {
     try {
       console.log('🔐 Authenticating with Salesforce...');
       
-      const response = await fetch('/salesforce-auth/services/oauth2/token', {
+      // Always use the Netlify function proxy for authentication
+      const baseUrl = this.getApiBaseUrl();
+      const authUrl = `${baseUrl}/salesforce-auth/services/oauth2/token`;
+      
+      const response = await fetch(authUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -79,14 +103,26 @@ class AuthService {
           errorData = { error: errorText };
         }
 
+        // Check if this is a demo mode response
+        if (errorData.mode === 'demo') {
+          console.log('🔄 Demo mode detected from auth response');
+          throw new Error('Demo mode - Salesforce not configured');
+        }
+
         console.log('⚠️ Salesforce authentication failed:', errorData);
         throw new Error(`Authentication failed: ${response.status} - ${errorData.error || errorText}`);
       }
 
-      const tokenData = await response.json();
+      const responseData = await response.json();
       
-      this.accessToken = tokenData.access_token;
-      this.instanceUrl = tokenData.instance_url || this.INSTANCE_URL;
+      // Check if this is a demo mode response
+      if (responseData.mode === 'demo') {
+        console.log('🔄 Demo mode detected from auth response');
+        throw new Error('Demo mode - Salesforce not configured');
+      }
+      
+      this.accessToken = responseData.access_token;
+      this.instanceUrl = responseData.instance_url || this.INSTANCE_URL;
       this.tokenExpiry = Date.now() + (3600 * 1000); // 1 hour default
 
       console.log('✅ Salesforce authentication successful');
@@ -101,7 +137,7 @@ class AuthService {
    */
   private generateLocalToken(): string {
     console.log('💾 Using local storage mode - Salesforce integration unavailable');
-    this.accessToken = 'local_token_' + Date.now();
+    this.accessToken = 'demo_token_' + Date.now();
     this.tokenExpiry = Date.now() + (2 * 60 * 60 * 1000); // 2 hours from now
     this.instanceUrl = this.INSTANCE_URL;
     return this.accessToken;
@@ -155,14 +191,13 @@ class AuthService {
     const instanceUrl = this.getInstanceUrl();
 
     // Check if we're in local storage mode
-    if (token.startsWith('local_token_')) {
+    if (token.startsWith('demo_token_')) {
       return this.makeLocalRequest(endpoint, options);
     }
 
-    // Construct full URL for real Salesforce API
-    const fullUrl = endpoint.startsWith('http') 
-      ? endpoint 
-      : `/salesforce-api${endpoint}`;
+    // Always use Netlify function proxy for API calls
+    const baseUrl = this.getApiBaseUrl();
+    const fullUrl = `${baseUrl}/salesforce-api${endpoint}`;
 
     const headers = {
       'Authorization': `Bearer ${token}`,
@@ -172,7 +207,7 @@ class AuthService {
       ...options.headers,
     };
 
-    console.log('🌐 Making Salesforce API request:', fullUrl);
+    console.log(`🌐 Making Salesforce API request: ${fullUrl}`);
 
     try {
       const response = await fetch(fullUrl, {
@@ -185,7 +220,7 @@ class AuthService {
         this.clearTokens();
         const newToken = await this.getAccessToken();
         
-        if (!newToken.startsWith('local_token_')) {
+        if (!newToken.startsWith('demo_token_')) {
           // Retry with new token
           const retryHeaders = { ...headers, 'Authorization': `Bearer ${newToken}` };
           return fetch(fullUrl, { ...options, headers: retryHeaders });
