@@ -292,6 +292,23 @@ const SettingsPage: React.FC = () => {
               )}
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Fuel Cost per Liter (₹)</label>
+              {isEditingVehicle ? (
+                <input
+                  type="number"
+                  step="0.1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={tempVehicleSettings.fuelCost}
+                  onChange={(e) => handleVehicleSettingChange('fuelCost', e.target.value)}
+                  placeholder="102.0"
+                />
+              ) : (
+                <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                  ₹{settings.vehicle.fuelCost}/L
+                </div>
+              )}
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Cold Start Threshold (°C)</label>
               {isEditingVehicle ? (
                 <input

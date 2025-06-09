@@ -22,6 +22,7 @@ const defaultSettings: AppSettings = {
     makeModel: 'Honda Accord 2021',
     fuelType: 'Petrol',
     engineSize: '2.4',
+    fuelCost: '102.0', // NEW: Default fuel cost for petrol in rupees
     coldStartThreshold: '15',
     tripCooldownTime: '5',
     aggressiveThrottleThreshold: '75',

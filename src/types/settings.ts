@@ -10,6 +10,7 @@ export interface VehicleSettings {
   makeModel: string;
   fuelType: 'Petrol' | 'Diesel' | 'Electric';
   engineSize: string;
+  fuelCost: string; // NEW: Fuel cost per liter in rupees
   coldStartThreshold: string;
   tripCooldownTime: string;
   aggressiveThrottleThreshold: string;
