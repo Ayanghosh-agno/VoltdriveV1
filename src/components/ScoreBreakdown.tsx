@@ -2,6 +2,7 @@ import React from 'react';
 import { Shield, Fuel, Activity, Leaf, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { FrontendScoreCalculator, TripScoreInput, VehicleBaselines } from '../utils/frontendScoreCalculator';
 import { useSettings } from '../hooks/useSettings';
+import { Link } from 'react-router-dom';
 
 interface ScoreBreakdownProps {
   tripData: TripScoreInput;
@@ -136,13 +137,20 @@ const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ tripData, className = '
         </div>
       </div>
 
-      {/* Vehicle Baseline Info */}
+      {/* Updated Calculation Baseline Info */}
       <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-        <h5 className="text-sm font-medium text-blue-800 mb-1">Calculation Baseline</h5>
+        <h5 className="text-sm font-medium text-blue-800 mb-2">Calculation Baseline</h5>
         <div className="text-xs text-blue-700 space-y-1">
           <div>Vehicle Claimed Mileage: {vehicleBaselines.averageMileage} km/l</div>
-          <div>Speed Threshold: {vehicleBaselines.speedThreshold} km/hr</div>
           <div>Fuel Type: {vehicleBaselines.fuelType}</div>
+          <div className="pt-2 border-t border-blue-200">
+            <Link 
+              to="/settings" 
+              className="text-blue-600 hover:text-blue-800 underline font-medium"
+            >
+              Move to Settings page to check the threshold points →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
