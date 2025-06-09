@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, Fuel, Gauge, AlertTriangle, TrendingUp, Zap, TreePine, Router as Route, WifiOff, RefreshCw } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Fuel, Gauge, AlertTriangle, TrendingUp, Zap, TreePine, Route, WifiOff, RefreshCw } from 'lucide-react';
 import TripMap from '../components/TripMap';
 import AnalyticsChart from '../components/AnalyticsChart';
 import AIAdvice from '../components/AIAdvice';
@@ -131,6 +131,8 @@ const TripDetailPage: React.FC = () => {
 
   // Temporary score calculation until Salesforce provides calculatedScore
   const calculateTempScore = (trip: any) => {
+    if (trip.calculatedScore) return trip.calculatedScore;
+    
     let score = 100;
     
     // Penalty for harsh events
@@ -191,7 +193,7 @@ const TripDetailPage: React.FC = () => {
     return (
       <div className="space-y-6 pb-20 md:pb-8">
         <div className="flex items-center space-x-4">
-          <Link to="/trips\" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link to="/trips" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Link>
           <div className="flex-1">
@@ -397,64 +399,6 @@ const TripDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* 🎯 DETAILED ANALYSIS - ONLY SERVER BONUSES & PENALTIES */}
-      {(tripData.penalties || tripData.bonuses) && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Detailed Analysis</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Penalties from Server */}
-            {tripData.penalties && tripData.penalties.descriptions && tripData.penalties.descriptions.length > 0 && (
-              <div>
-                <h4 className="font-medium text-red-600 mb-3 flex items-center">
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  Penalties Applied
-                </h4>
-                <div className="space-y-2">
-                  {tripData.penalties.descriptions.map((description: string, index: number) => (
-                    <div key={index} className="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-100">
-                      <span className="text-sm text-red-700">{description}</span>
-                      <span className="font-semibold text-red-600">
-                        -{tripData.penalties.points[index] || 0} pts
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Bonuses from Server */}
-            {tripData.bonuses && tripData.bonuses.descriptions && tripData.bonuses.descriptions.length > 0 && (
-              <div>
-                <h4 className="font-medium text-green-600 mb-3 flex items-center">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Bonuses Earned
-                </h4>
-                <div className="space-y-2">
-                  {tripData.bonuses.descriptions.map((description: string, index: number) => (
-                    <div key={index} className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-100">
-                      <span className="text-sm text-green-700">{description}</span>
-                      <span className="font-semibold text-green-600">
-                        +{tripData.bonuses.points[index] || 0} pts
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Show message if no penalties or bonuses */}
-          {(!tripData.penalties || !tripData.penalties.descriptions || tripData.penalties.descriptions.length === 0) &&
-           (!tripData.bonuses || !tripData.bonuses.descriptions || tripData.bonuses.descriptions.length === 0) && (
-            <div className="text-center py-8">
-              <div className="text-gray-400 mb-2">📊</div>
-              <p className="text-gray-500">No detailed penalties or bonuses data available from server</p>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Map */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
