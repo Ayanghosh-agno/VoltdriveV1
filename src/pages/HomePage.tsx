@@ -1,33 +1,23 @@
 import React from 'react';
-import { TrendingUp, Fuel, Clock, Shield, AlertTriangle, Award } from 'lucide-react';
+import { TrendingUp, Fuel, Clock, Shield, AlertTriangle, Award, RefreshCw } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import ProgressRing from '../components/ProgressRing';
 import RecentTrips from '../components/RecentTrips';
 import SafetyRating from '../components/SafetyRating';
-import { DrivingScoreCalculator, ScoreBreakdown } from '../utils/scoreCalculation';
+import { usePerformanceData } from '../hooks/usePerformanceData';
 import { useSettings } from '../hooks/useSettings';
 
 const HomePage: React.FC = () => {
-  const { settings, loading } = useSettings();
-
-  // Mock recent scores for safety rating calculation
-  const recentScores: ScoreBreakdown[] = [
-    { overall: 92, safety: 94, efficiency: 88, smoothness: 95, environmental: 90, breakdown: { speedingPenalty: 2, harshEventsPenalty: 5, idlingPenalty: 3, fuelEfficiencyScore: 85, smoothnessScore: 95, speedConsistencyScore: 88 } },
-    { overall: 88, safety: 90, efficiency: 85, smoothness: 92, environmental: 85, breakdown: { speedingPenalty: 5, harshEventsPenalty: 8, idlingPenalty: 5, fuelEfficiencyScore: 80, smoothnessScore: 92, speedConsistencyScore: 85 } },
-    { overall: 85, safety: 87, efficiency: 82, smoothness: 88, environmental: 83, breakdown: { speedingPenalty: 8, harshEventsPenalty: 10, idlingPenalty: 7, fuelEfficiencyScore: 78, smoothnessScore: 88, speedConsistencyScore: 82 } },
-  ];
-
-  const safetyRating = DrivingScoreCalculator.calculateSafetyRating(recentScores);
-  const drivingScore = 87;
-  const fuelEfficiency = 92;
+  const { settings, loading: settingsLoading } = useSettings();
+  const { performanceMetrics, loading: dataLoading, error, refreshData } = usePerformanceData();
 
   // Extract first name from full name for a more personal greeting
   const getFirstName = (fullName: string) => {
     return fullName.split(' ')[0];
   };
 
-  // Show loading state while fetching user data
-  if (loading) {
+  // Show loading state while fetching data
+  if (settingsLoading || dataLoading) {
     return (
       <div className="space-y-8 pb-20 md:pb-8">
         {/* Loading Welcome Section */}
@@ -62,6 +52,39 @@ const HomePage: React.FC = () => {
     );
   }
 
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-8 pb-20 md:pb-8">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <AlertTriangle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Data</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={refreshData}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Retry</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Determine safety rating trend and risk level
+  const getSafetyTrend = (score: number): 'improving' | 'stable' | 'declining' => {
+    if (score >= 90) return 'improving';
+    if (score >= 70) return 'stable';
+    return 'declining';
+  };
+
+  const getRiskLevel = (score: number): 'low' | 'medium' | 'high' => {
+    if (score >= 85) return 'low';
+    if (score >= 70) return 'medium';
+    return 'high';
+  };
+
   return (
     <div className="space-y-8 pb-20 md:pb-8">
       {/* Welcome Section */}
@@ -75,12 +98,14 @@ const HomePage: React.FC = () => {
           </div>
           <div className="mt-4 md:mt-0 flex space-x-4">
             <div className="text-center">
-              <div className="text-2xl font-bold">204 km</div>
-              <div className="text-blue-200 text-sm">Distance Today</div>
+              <div className="text-2xl font-bold">{performanceMetrics.totalDistance.value} km</div>
+              <div className="text-blue-200 text-sm">Distance This Month</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">15</div>
-              <div className="text-blue-200 text-sm">Trips This Week</div>
+              <div className="text-2xl font-bold">
+                {performanceMetrics.totalDistance.value > 0 ? Math.ceil(performanceMetrics.totalDistance.value / 20) : 0}
+              </div>
+              <div className="text-blue-200 text-sm">Trips This Month</div>
             </div>
           </div>
         </div>
@@ -94,10 +119,13 @@ const HomePage: React.FC = () => {
             <Award className="h-5 w-5 text-yellow-500" />
           </div>
           <div className="flex items-center justify-center">
-            <ProgressRing percentage={drivingScore} color="blue" size={120} />
+            <ProgressRing percentage={performanceMetrics.drivingScore} color="blue" size={120} />
           </div>
           <p className="text-center text-sm text-gray-600 mt-4">
-            Excellent driving! Keep it up.
+            {performanceMetrics.drivingScore >= 90 ? 'Excellent driving! Keep it up.' :
+             performanceMetrics.drivingScore >= 80 ? 'Good driving with room for improvement.' :
+             performanceMetrics.drivingScore >= 70 ? 'Average performance, focus on safety.' :
+             'Needs improvement - drive more carefully.'}
           </p>
         </div>
 
@@ -107,17 +135,19 @@ const HomePage: React.FC = () => {
             <Fuel className="h-5 w-5 text-green-500" />
           </div>
           <div className="flex items-center justify-center">
-            <ProgressRing percentage={fuelEfficiency} color="green" size={120} />
+            <ProgressRing percentage={performanceMetrics.fuelEfficiency} color="green" size={120} />
           </div>
           <p className="text-center text-sm text-gray-600 mt-4">
-            Above average efficiency
+            {performanceMetrics.fuelEfficiency >= 80 ? 'Excellent fuel efficiency' :
+             performanceMetrics.fuelEfficiency >= 70 ? 'Good fuel efficiency' :
+             'Room for improvement'}
           </p>
         </div>
 
         <SafetyRating 
-          rating={safetyRating.rating}
-          trend={safetyRating.trend}
-          riskLevel={safetyRating.riskLevel}
+          rating={performanceMetrics.safetyRating}
+          trend={getSafetyTrend(performanceMetrics.safetyRating)}
+          riskLevel={getRiskLevel(performanceMetrics.safetyRating)}
         />
       </div>
 
@@ -125,29 +155,29 @@ const HomePage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           title="Total Distance"
-          value="2,005 km"
-          change="+12%"
+          value={`${performanceMetrics.totalDistance.value} km`}
+          change={performanceMetrics.totalDistance.change}
           icon={TrendingUp}
           color="blue"
         />
         <StatCard
           title="Avg. Speed"
-          value="51 km/hr"
-          change="-2%"
+          value={`${performanceMetrics.avgSpeed.value} km/hr`}
+          change={performanceMetrics.avgSpeed.change}
           icon={Clock}
           color="green"
         />
         <StatCard
           title="Hard Braking"
-          value="3 events"
-          change="-50%"
+          value={`${performanceMetrics.hardBrakingEvents.value} events`}
+          change={performanceMetrics.hardBrakingEvents.change}
           icon={AlertTriangle}
           color="amber"
         />
         <StatCard
           title="Fuel Saved"
-          value="₹1,247"
-          change="+8%"
+          value={`₹${performanceMetrics.fuelSaved.value}`}
+          change={performanceMetrics.fuelSaved.change}
           icon={Fuel}
           color="emerald"
         />
@@ -158,26 +188,55 @@ const HomePage: React.FC = () => {
 
       {/* Insights & Tips */}
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-white/20">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Today's Insights</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-gray-800">Today's Insights</h3>
+          <button
+            onClick={refreshData}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Refresh data"
+          >
+            <RefreshCw className="h-4 w-4 text-gray-600" />
+          </button>
+        </div>
         <div className="space-y-4">
-          <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-xl border border-green-100">
-            <div className="bg-green-500 rounded-full p-1">
-              <TrendingUp className="h-4 w-4 text-white" />
+          {performanceMetrics.insights.length > 0 ? (
+            performanceMetrics.insights.map((insight, index) => (
+              <div key={index} className={`flex items-start space-x-3 p-4 rounded-xl border ${
+                insight.color === 'green' ? 'bg-green-50 border-green-100' :
+                insight.color === 'blue' ? 'bg-blue-50 border-blue-100' :
+                insight.color === 'amber' ? 'bg-amber-50 border-amber-100' :
+                'bg-red-50 border-red-100'
+              }`}>
+                <div className={`rounded-full p-1 ${
+                  insight.color === 'green' ? 'bg-green-500' :
+                  insight.color === 'blue' ? 'bg-blue-500' :
+                  insight.color === 'amber' ? 'bg-amber-500' :
+                  'bg-red-500'
+                }`}>
+                  <div className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className={`font-medium ${
+                    insight.color === 'green' ? 'text-green-800' :
+                    insight.color === 'blue' ? 'text-blue-800' :
+                    insight.color === 'amber' ? 'text-amber-800' :
+                    'text-red-800'
+                  }`}>{insight.title}</p>
+                  <p className={`text-sm ${
+                    insight.color === 'green' ? 'text-green-600' :
+                    insight.color === 'blue' ? 'text-blue-600' :
+                    insight.color === 'amber' ? 'text-amber-600' :
+                    'text-red-600'
+                  }`}>{insight.description}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No insights available yet. Drive more to get personalized recommendations!</p>
             </div>
-            <div>
-              <p className="font-medium text-green-800">Great fuel efficiency!</p>
-              <p className="text-sm text-green-600">You saved 15% more fuel than average today.</p>
-            </div>
-          </div>
-          <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
-            <div className="bg-blue-500 rounded-full p-1">
-              <Shield className="h-4 w-4 text-white" />
-            </div>
-            <div>
-              <p className="font-medium text-blue-800">Smooth driving detected</p>
-              <p className="text-sm text-blue-600">Your acceleration patterns are very consistent.</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
