@@ -4,12 +4,12 @@ import StatCard from '../components/StatCard';
 import ProgressRing from '../components/ProgressRing';
 import RecentTrips from '../components/RecentTrips';
 import SafetyRating from '../components/SafetyRating';
-import { usePerformanceData } from '../hooks/usePerformanceData';
+import { useSalesforceData } from '../hooks/useSalesforceData';
 import { useSettings } from '../hooks/useSettings';
 
 const HomePage: React.FC = () => {
   const { settings, loading: settingsLoading } = useSettings();
-  const { performanceMetrics, loading: dataLoading, error, refreshData } = usePerformanceData();
+  const { performanceMetrics, loading: dataLoading, error, refreshData } = useSalesforceData();
 
   // Extract first name from full name for a more personal greeting
   const getFirstName = (fullName: string) => {
@@ -72,6 +72,19 @@ const HomePage: React.FC = () => {
     );
   }
 
+  // Show message if no performance metrics available
+  if (!performanceMetrics) {
+    return (
+      <div className="space-y-8 pb-20 md:pb-8">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+          <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">No Data Available</h3>
+          <p className="text-blue-600 mb-4">Start driving to see your performance metrics!</p>
+        </div>
+      </div>
+    );
+  }
+
   // Determine safety rating trend and risk level
   const getSafetyTrend = (score: number): 'improving' | 'stable' | 'declining' => {
     if (score >= 90) return 'improving';
@@ -99,13 +112,13 @@ const HomePage: React.FC = () => {
           <div className="mt-4 md:mt-0 flex space-x-4">
             <div className="text-center">
               <div className="text-2xl font-bold">{performanceMetrics.totalDistance.value} km</div>
-              <div className="text-blue-200 text-sm">Distance This Month</div>
+              <div className="text-blue-200 text-sm">Distance This Week</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold">
                 {performanceMetrics.totalDistance.value > 0 ? Math.ceil(performanceMetrics.totalDistance.value / 20) : 0}
               </div>
-              <div className="text-blue-200 text-sm">Trips This Month</div>
+              <div className="text-blue-200 text-sm">Trips This Week</div>
             </div>
           </div>
         </div>
@@ -189,7 +202,7 @@ const HomePage: React.FC = () => {
       {/* Insights & Tips */}
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-white/20">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">Today's Insights</h3>
+          <h3 className="text-xl font-semibold text-gray-800">This Week's Insights</h3>
           <button
             onClick={refreshData}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
