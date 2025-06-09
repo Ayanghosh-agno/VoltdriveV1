@@ -39,15 +39,30 @@ const TripDetailPage: React.FC = () => {
         idling: foundTrip.idling || 0, // seconds
         overSpeeding: foundTrip.overSpeeding || 0 // seconds
       },
-      startLocation: foundTrip.startLocation || { lat: 37.7749, lng: -122.4194, name: 'Start Point' },
-      endLocation: foundTrip.endLocation || { lat: 37.7849, lng: -122.4094, name: 'End Point' },
+      // Extract start and end locations from route (first and last points)
+      startLocation: foundTrip.route && foundTrip.route.length > 0 
+        ? { 
+            lat: foundTrip.route[0].lat, 
+            lng: foundTrip.route[0].lng, 
+            name: foundTrip.route[0].address || 'Start Point' 
+          }
+        : { lat: 37.7749, lng: -122.4194, name: 'Start Point' },
+      endLocation: foundTrip.route && foundTrip.route.length > 0 
+        ? { 
+            lat: foundTrip.route[foundTrip.route.length - 1].lat, 
+            lng: foundTrip.route[foundTrip.route.length - 1].lng, 
+            name: foundTrip.route[foundTrip.route.length - 1].address || 'End Point' 
+          }
+        : { lat: 37.7849, lng: -122.4094, name: 'End Point' },
       route: foundTrip.route || [
         { lat: 37.7749, lng: -122.4194 },
         { lat: 37.7779, lng: -122.4164 },
         { lat: 37.7809, lng: -122.4134 },
         { lat: 37.7839, lng: -122.4104 },
         { lat: 37.7849, lng: -122.4094 }
-      ]
+      ],
+      // Detailed OBD-II data for charts
+      detailedData: foundTrip.detailedData || null
     };
   }, [salesforceData, tripId]);
 
@@ -325,29 +340,67 @@ const TripDetailPage: React.FC = () => {
         />
       </div>
 
-      {/* Analytics Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AnalyticsChart 
-          title="Speed Analysis" 
-          type="speed"
-          color="#3B82F6"
-        />
-        <AnalyticsChart 
-          title="Engine RPM" 
-          type="rpm"
-          color="#10B981"
-        />
-        <AnalyticsChart 
-          title="Engine Load" 
-          type="load"
-          color="#F59E0B"
-        />
-        <AnalyticsChart 
-          title="Throttle Position" 
-          type="throttle"
-          color="#8B5CF6"
-        />
-      </div>
+      {/* Analytics Charts - Time-based OBD-II Data */}
+      {tripData.detailedData && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold text-gray-900">OBD-II Analytics</h3>
+            <div className="text-sm text-gray-600">
+              Real-time data from your vehicle's engine control unit
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Speed Profile */}
+            {tripData.detailedData.speedProfile && (
+              <AnalyticsChart 
+                title="Speed Over Time" 
+                data={tripData.detailedData.speedProfile}
+                color="#3B82F6"
+                unit="km/hr"
+                yAxisDomain={[0, Math.max(...tripData.detailedData.speedProfile) + 10]}
+                tripDuration={tripData.duration}
+              />
+            )}
+            
+            {/* RPM Profile */}
+            {tripData.detailedData.rpmProfile && (
+              <AnalyticsChart 
+                title="Engine RPM Over Time" 
+                data={tripData.detailedData.rpmProfile}
+                color="#10B981"
+                unit="RPM"
+                yAxisDomain={[0, Math.max(...tripData.detailedData.rpmProfile) + 200]}
+                tripDuration={tripData.duration}
+              />
+            )}
+            
+            {/* Engine Load Profile */}
+            {tripData.detailedData.engineLoadProfile && (
+              <AnalyticsChart 
+                title="Engine Load Over Time" 
+                data={tripData.detailedData.engineLoadProfile}
+                color="#F59E0B"
+                unit="%"
+                yAxisDomain={[0, 100]}
+                tripDuration={tripData.duration}
+              />
+            )}
+            
+            {/* Throttle Profile */}
+            {tripData.detailedData.throttleProfile && (
+              <AnalyticsChart 
+                title="Throttle Position Over Time" 
+                data={tripData.detailedData.throttleProfile}
+                color="#8B5CF6"
+                unit="%"
+                yAxisDomain={[0, 100]}
+                tripDuration={tripData.duration}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* AI Advice */}
       <AIAdvice tripData={tripData} />

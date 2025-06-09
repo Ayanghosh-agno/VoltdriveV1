@@ -71,6 +71,26 @@ export interface RecentTripData {
   overSpeeding: number; // seconds
   idling: number; // seconds
   overRevving: number; // seconds
+  
+  // Optional: Calculated score from Salesforce
+  calculatedScore?: number; // 0-100
+  
+  // Optional: Route data (GPS coordinates)
+  route?: RoutePoint[];
+  
+  // Optional: Detailed OBD-II data for analytics charts
+  detailedData?: {
+    speedProfile?: number[];        // Speed readings over time (km/hr)
+    rpmProfile?: number[];          // RPM readings over time
+    throttleProfile?: number[];     // Throttle position over time (%)
+    engineLoadProfile?: number[];   // Engine load over time (%)
+  };
+}
+
+export interface RoutePoint {
+  lat: number;
+  lng: number;
+  address?: string; // Optional address for start/end points
 }
 
 export interface UserBaselines {
@@ -139,7 +159,22 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
       harshBraking: 1,
       overSpeeding: 45,
       idling: 180,
-      overRevving: 15
+      overRevving: 15,
+      calculatedScore: 92,
+      route: [
+        { lat: 19.0760, lng: 72.8777, address: "Bandra West, Mumbai" },
+        { lat: 19.0750, lng: 72.8767 },
+        { lat: 19.0740, lng: 72.8757 },
+        { lat: 19.0730, lng: 72.8747 },
+        { lat: 19.0720, lng: 72.8737 },
+        { lat: 19.0176, lng: 72.8562, address: "Lower Parel, Mumbai" }
+      ],
+      detailedData: {
+        speedProfile: [42, 38, 45, 52, 48, 41, 39, 44, 50, 46, 43, 47, 49, 45, 42, 40, 44, 48, 51, 47, 43, 41, 46, 49, 45, 42, 38, 44, 50, 47, 43, 41, 45, 48, 46, 44, 42, 47, 49, 45, 43, 41, 44, 48, 46, 42, 40, 45, 47, 44],
+        rpmProfile: [1800, 1650, 2100, 2400, 2200, 1900, 1750, 2000, 2300, 2100, 1950, 2150, 2250, 2050, 1900, 1800, 2000, 2200, 2350, 2150, 1950, 1850, 2100, 2250, 2050, 1900, 1700, 2000, 2300, 2150, 1950, 1850, 2050, 2200, 2100, 2000, 1900, 2150, 2250, 2050, 1950, 1850, 2000, 2200, 2100, 1900, 1800, 2050, 2150, 2000],
+        throttleProfile: [25, 20, 35, 45, 40, 28, 22, 30, 42, 38, 32, 36, 40, 35, 28, 25, 30, 40, 45, 36, 32, 26, 38, 42, 35, 28, 20, 30, 42, 36, 32, 26, 35, 40, 38, 30, 28, 36, 42, 35, 32, 26, 30, 40, 38, 28, 25, 35, 36, 30],
+        engineLoadProfile: [45, 38, 52, 62, 58, 48, 42, 50, 60, 56, 50, 54, 58, 52, 48, 45, 50, 58, 62, 54, 50, 46, 56, 60, 52, 48, 40, 50, 60, 54, 50, 46, 52, 58, 56, 50, 48, 54, 60, 52, 50, 46, 50, 58, 56, 48, 45, 52, 54, 50]
+      }
     },
     {
       tripId: "trip_002",
@@ -156,7 +191,14 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
       harshBraking: 1,
       overSpeeding: 0,
       idling: 120,
-      overRevving: 5
+      overRevving: 5,
+      calculatedScore: 88,
+      route: [
+        { lat: 19.0176, lng: 72.8562, address: "Lower Parel, Mumbai" },
+        { lat: 19.0186, lng: 72.8572 },
+        { lat: 19.0196, lng: 72.8582 },
+        { lat: 19.0760, lng: 72.8777, address: "Bandra West, Mumbai" }
+      ]
     },
     {
       tripId: "trip_003",
@@ -173,7 +215,12 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
       harshBraking: 2,
       overSpeeding: 120,
       idling: 240,
-      overRevving: 30
+      overRevving: 30,
+      calculatedScore: 85,
+      route: [
+        { lat: 19.0760, lng: 72.8777, address: "Bandra West, Mumbai" },
+        { lat: 18.9220, lng: 72.8347, address: "Worli, Mumbai" }
+      ]
     }
   ],
   
