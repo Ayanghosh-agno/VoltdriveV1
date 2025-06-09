@@ -1,16 +1,21 @@
 // Salesforce Data Processor
 // Converts Salesforce JSON to our internal performance metrics
 
-import { SalesforceHomePageData, WeeklyTripInsight, RecentTripData } from '../types/salesforceData';
+import { SalesforceHomePageData, WeeklyTripInsight, RecentTripData, UserBaselines } from '../types/salesforceData';
 import { CalculatedMetrics, Insight } from './performanceCalculator';
+import { AppSettings } from '../types/settings';
 
 export class SalesforceDataProcessor {
   
   /**
    * Process Salesforce data and calculate all metrics
+   * Now takes settings to derive userBaselines
    */
-  static processHomePageData(salesforceData: SalesforceHomePageData): CalculatedMetrics {
-    const { currentWeekTripInsight, previousWeekTripInsight, recentTrips, userBaselines } = salesforceData;
+  static processHomePageData(salesforceData: SalesforceHomePageData, settings: AppSettings): CalculatedMetrics {
+    const { currentWeekTripInsight, previousWeekTripInsight, recentTrips } = salesforceData;
+    
+    // Create userBaselines from settings page data
+    const userBaselines = this.createUserBaselinesFromSettings(settings);
     
     // Calculate main scores
     const drivingScore = this.calculateDrivingScore(recentTrips, userBaselines);
@@ -37,9 +42,25 @@ export class SalesforceDataProcessor {
   }
   
   /**
+   * Create UserBaselines from settings page data
+   */
+  private static createUserBaselinesFromSettings(settings: AppSettings): UserBaselines {
+    return {
+      averageFuelEfficiency: parseFloat(settings.vehicle.averageMileage),
+      targetFuelEfficiency: 15.0, // Industry standard km/l
+      fuelCostPerLiter: settings.vehicle.fuelType === 'Petrol' ? 102 : 89, // ₹ per liter
+      vehicleType: settings.vehicle.fuelType.toLowerCase() as 'petrol' | 'diesel' | 'electric',
+      speedThreshold: parseFloat(settings.vehicle.speedThreshold),
+      harshAccelThreshold: parseFloat(settings.vehicle.harshAccelThreshold),
+      harshBrakeThreshold: parseFloat(settings.vehicle.harshBrakeThreshold),
+      revThreshold: parseFloat(settings.vehicle.revThreshold),
+    };
+  }
+  
+  /**
    * Calculate overall driving score from recent trips (0-100)
    */
-  private static calculateDrivingScore(recentTrips: RecentTripData[], userBaselines: any): number {
+  private static calculateDrivingScore(recentTrips: RecentTripData[], userBaselines: UserBaselines): number {
     if (recentTrips.length === 0) return 0;
     
     let totalScore = 0;
@@ -82,7 +103,7 @@ export class SalesforceDataProcessor {
   /**
    * Calculate fuel efficiency score (0-100)
    */
-  private static calculateFuelEfficiencyScore(currentWeek: WeeklyTripInsight, userBaselines: any): number {
+  private static calculateFuelEfficiencyScore(currentWeek: WeeklyTripInsight, userBaselines: UserBaselines): number {
     const ratio = currentWeek.actualFuelEfficiency / userBaselines.targetFuelEfficiency;
     
     if (ratio >= 1.3) return 100;      // 30% better than target
@@ -97,7 +118,7 @@ export class SalesforceDataProcessor {
   /**
    * Calculate safety rating (0-100)
    */
-  private static calculateSafetyRating(recentTrips: RecentTripData[], userBaselines: any): number {
+  private static calculateSafetyRating(recentTrips: RecentTripData[], userBaselines: UserBaselines): number {
     if (recentTrips.length === 0) return 50;
     
     let totalSafetyScore = 0;
@@ -136,7 +157,7 @@ export class SalesforceDataProcessor {
   private static calculateQuickStats(
     currentWeek: WeeklyTripInsight, 
     previousWeek: WeeklyTripInsight, 
-    userBaselines: any
+    userBaselines: UserBaselines
   ) {
     // Calculate fuel savings in ₹
     const expectedFuel = currentWeek.totalDistance / userBaselines.targetFuelEfficiency;
@@ -192,7 +213,7 @@ export class SalesforceDataProcessor {
     currentWeek: WeeklyTripInsight,
     previousWeek: WeeklyTripInsight,
     recentTrips: RecentTripData[],
-    userBaselines: any
+    userBaselines: UserBaselines
   ): Insight[] {
     const insights: Insight[] = [];
     
@@ -275,7 +296,7 @@ export class SalesforceDataProcessor {
   private static calculateScoreBreakdown(
     currentWeek: WeeklyTripInsight, 
     recentTrips: RecentTripData[], 
-    userBaselines: any
+    userBaselines: UserBaselines
   ) {
     // Safety score (based on harsh events and speeding)
     const totalHarshEvents = currentWeek.totalHarshAcceleration + currentWeek.totalHarshBraking;

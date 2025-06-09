@@ -11,9 +11,6 @@ export interface SalesforceHomePageData {
   // Recent 3 trips for detailed analysis
   recentTrips: RecentTripData[];
   
-  // User vehicle baselines (from settings)
-  userBaselines: UserBaselines;
-  
   // Metadata
   metadata: {
     dataFetchedAt: string; // ISO timestamp
@@ -120,7 +117,7 @@ export interface RecentTripData {
 }
 
 export interface UserBaselines {
-  // Vehicle settings
+  // Vehicle settings - DERIVED FROM SETTINGS PAGE
   averageFuelEfficiency: number; // km/l from user's vehicle settings
   targetFuelEfficiency: number; // km/l industry standard (15 km/l)
   fuelCostPerLiter: number; // ₹ per liter (102 for petrol, 89 for diesel)
@@ -131,10 +128,6 @@ export interface UserBaselines {
   harshAccelThreshold: number; // m/s²
   harshBrakeThreshold: number; // m/s²
   revThreshold: number; // RPM
-  
-  // User preferences
-  preferredDrivingStyle: 'eco' | 'normal' | 'sport';
-  safetyPriority: 'high' | 'medium' | 'low';
 }
 
 // Example JSON that Salesforce should send to /tripInsights endpoint
@@ -264,19 +257,6 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
     }
   ],
   
-  userBaselines: {
-    averageFuelEfficiency: 15.5, // from user vehicle settings
-    targetFuelEfficiency: 15.0,
-    fuelCostPerLiter: 102, // petrol price in ₹
-    vehicleType: 'petrol',
-    speedThreshold: 80,
-    harshAccelThreshold: 3.5,
-    harshBrakeThreshold: 4.0,
-    revThreshold: 3500,
-    preferredDrivingStyle: 'normal',
-    safetyPriority: 'high'
-  },
-  
   metadata: {
     dataFetchedAt: "2024-01-15T10:30:00Z",
     userId: "user_12345",
@@ -295,12 +275,12 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
 //   "currentWeekTripInsight": { ... },
 //   "previousWeekTripInsight": { ... },
 //   "recentTrips": [ ... ],
-//   "userBaselines": { ... },
 //   "metadata": { ... }
 // }
 //
 // The frontend will:
 // 1. Call this endpoint on page load
-// 2. Process the data to calculate all metrics
-// 3. Display performance scores, insights, and comparisons
-// 4. Handle errors gracefully with fallback demo data
+// 2. Get user baselines from settings page
+// 3. Process the data to calculate all metrics
+// 4. Display performance scores, insights, and comparisons
+// 5. Handle errors gracefully with fallback demo data

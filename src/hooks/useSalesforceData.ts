@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react';
 import { SalesforceHomePageData, exampleSalesforceResponse } from '../types/salesforceData';
 import { SalesforceDataProcessor } from '../utils/salesforceDataProcessor';
 import { CalculatedMetrics } from '../utils/performanceCalculator';
+import { useSettings } from './useSettings';
 import AuthService from '../services/authService';
 
 export const useSalesforceData = () => {
+  const { settings } = useSettings(); // Get settings for userBaselines
   const [salesforceData, setSalesforceData] = useState<SalesforceHomePageData | null>(null);
   const [performanceMetrics, setPerformanceMetrics] = useState<CalculatedMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,8 @@ export const useSalesforceData = () => {
         const fallbackData = exampleSalesforceResponse;
         setSalesforceData(fallbackData);
         
-        const metrics = SalesforceDataProcessor.processHomePageData(fallbackData);
+        // Process with settings-derived userBaselines
+        const metrics = SalesforceDataProcessor.processHomePageData(fallbackData, settings);
         setPerformanceMetrics(metrics);
         
         setError('Running in demo mode - Salesforce integration not available');
@@ -54,8 +57,8 @@ export const useSalesforceData = () => {
       
       setSalesforceData(data);
       
-      // Process the data to calculate metrics
-      const metrics = SalesforceDataProcessor.processHomePageData(data);
+      // Process the data to calculate metrics using settings
+      const metrics = SalesforceDataProcessor.processHomePageData(data, settings);
       setPerformanceMetrics(metrics);
       
       console.log('📊 Performance metrics calculated:', metrics);
@@ -68,7 +71,8 @@ export const useSalesforceData = () => {
       const fallbackData = exampleSalesforceResponse;
       setSalesforceData(fallbackData);
       
-      const metrics = SalesforceDataProcessor.processHomePageData(fallbackData);
+      // Process with settings-derived userBaselines
+      const metrics = SalesforceDataProcessor.processHomePageData(fallbackData, settings);
       setPerformanceMetrics(metrics);
       
       setError(`Salesforce connection failed: ${err instanceof Error ? err.message : 'Unknown error'}. Using demo data.`);
@@ -78,8 +82,11 @@ export const useSalesforceData = () => {
   };
 
   useEffect(() => {
-    fetchSalesforceData();
-  }, []);
+    // Only fetch when settings are available
+    if (settings) {
+      fetchSalesforceData();
+    }
+  }, [settings]);
 
   return {
     salesforceData,
