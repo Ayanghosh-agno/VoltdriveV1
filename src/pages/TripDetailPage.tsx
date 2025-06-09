@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, Fuel, Gauge, AlertTriangle, TrendingUp, Zap, TreePine, Activity, WifiOff, RefreshCw, Router as Route } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Fuel, Gauge, AlertTriangle, TrendingUp, Zap, TreePine, Route, WifiOff, RefreshCw } from 'lucide-react';
 import TripMap from '../components/TripMap';
 import AnalyticsChart from '../components/AnalyticsChart';
 import AIAdvice from '../components/AIAdvice';
@@ -191,7 +191,7 @@ const TripDetailPage: React.FC = () => {
     return (
       <div className="space-y-6 pb-20 md:pb-8">
         <div className="flex items-center space-x-4">
-          <Link to="/trips\" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link to="/trips" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Link>
           <div className="flex-1">
@@ -302,8 +302,8 @@ const TripDetailPage: React.FC = () => {
       {/* Score Breakdown - Now calculated in frontend */}
       <ScoreBreakdown tripData={tripScoreInput} />
 
-      {/* Trip Overview Cards - Now includes Mileage */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
+      {/* Trip Overview Cards - Removed Idling, now 8 cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center space-x-2 mb-2">
             <MapPin className="h-4 w-4 text-blue-500" />
@@ -362,15 +362,7 @@ const TripDetailPage: React.FC = () => {
         
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center space-x-2 mb-2">
-            <Activity className="h-4 w-4 text-red-500" />
-            <span className="text-xs font-medium text-gray-600">Idling</span>
-          </div>
-          <div className="text-xl font-bold text-gray-900">{formatTime(tripData.events.idling)}</div>
-        </div>
-        
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-2 mb-2">
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <AlertTriangle className="h-4 w-4 text-red-500" />
             <span className="text-xs font-medium text-gray-600">Events</span>
           </div>
           <div className="text-xl font-bold text-gray-900">
