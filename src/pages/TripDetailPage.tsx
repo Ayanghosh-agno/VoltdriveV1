@@ -5,66 +5,125 @@ import TripMap from '../components/TripMap';
 import AnalyticsChart from '../components/AnalyticsChart';
 import AIAdvice from '../components/AIAdvice';
 import ScoreBreakdown from '../components/ScoreBreakdown';
-import { useSalesforceData } from '../hooks/useSalesforceData';
+import AuthService from '../services/authService';
 
 const TripDetailPage: React.FC = () => {
   const { tripId } = useParams();
-  const { salesforceData, loading, error, refreshData } = useSalesforceData();
+  const [tripData, setTripData] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  // Find the specific trip from Salesforce data
-  const tripData = React.useMemo(() => {
-    if (!salesforceData?.recentTrips || !tripId) return null;
-    
-    const foundTrip = salesforceData.recentTrips.find(trip => trip.tripId === tripId);
-    if (!foundTrip) return null;
+  // Fetch trip details from your new API endpoint
+  const fetchTripDetails = React.useCallback(async () => {
+    if (!tripId) {
+      setError('Trip ID is required');
+      setLoading(false);
+      return;
+    }
 
-    // Convert Salesforce trip data to component format
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log(`🔄 Fetching trip details for ID: ${tripId}`);
+      
+      // Get authenticated service instance
+      const authService = AuthService.getInstance();
+      
+      // Make authenticated request to your new endpoint
+      const response = await authService.makeAuthenticatedRequest(`/services/apexrest/voltride/tripDetail/${tripId}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Trip details received from Salesforce:', data);
+      
+      // Check if this is an error response
+      if (data.success === false) {
+        throw new Error(data.error || 'Failed to fetch trip details from Salesforce');
+      }
+      
+      // Validate the data structure
+      if (!data.tripData) {
+        console.warn('⚠️ Invalid trip data structure received from Salesforce');
+        throw new Error('Invalid trip data structure received from Salesforce');
+      }
+      
+      // Convert Salesforce trip data to component format
+      const convertedTripData = convertSalesforceToTripData(data.tripData, tripId);
+      setTripData(convertedTripData);
+      
+      console.log('📊 Trip data processed successfully:', convertedTripData);
+      
+    } catch (err) {
+      console.error('❌ Error fetching trip details:', err);
+      
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Unable to load trip details. ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [tripId]);
+
+  // Convert Salesforce API response to internal format
+  const convertSalesforceToTripData = (salesforceTripData: any, tripId: string) => {
     return {
       id: tripId,
-      tripNumber: foundTrip.tripName,
-      date: foundTrip.date,
-      startTime: foundTrip.startTime,
-      endTime: foundTrip.endTime,
-      duration: foundTrip.duration, // minutes
-      distance: foundTrip.distance, // kilometers
-      fuelUsed: foundTrip.fuelUsed, // liters
-      co2Emitted: (foundTrip.fuelUsed * 2.31).toFixed(1), // Estimated CO2 (kg)
-      avgSpeed: foundTrip.avgSpeed, // km/hr
-      maxSpeed: foundTrip.maxSpeed, // km/hr
-      score: foundTrip.calculatedScore || calculateTempScore(foundTrip),
+      tripNumber: salesforceTripData.tripName || `Trip ${tripId}`,
+      date: salesforceTripData.date,
+      startTime: salesforceTripData.startTime,
+      endTime: salesforceTripData.endTime,
+      duration: salesforceTripData.duration, // minutes
+      distance: salesforceTripData.distance, // kilometers
+      fuelUsed: salesforceTripData.fuelUsed, // liters
+      co2Emitted: salesforceTripData.environmentalImpact?.co2Emitted || 
+                  (salesforceTripData.fuelUsed * 2.31).toFixed(1), // Estimated CO2 (kg)
+      avgSpeed: salesforceTripData.avgSpeed, // km/hr
+      maxSpeed: salesforceTripData.maxSpeed, // km/hr
+      score: salesforceTripData.calculatedScore || calculateTempScore(salesforceTripData),
       events: {
-        harshAcceleration: foundTrip.harshAcceleration || 0,
-        harshBraking: foundTrip.harshBraking || 0,
-        overRevving: foundTrip.overRevving || 0, // seconds
-        idling: foundTrip.idling || 0, // seconds
-        overSpeeding: foundTrip.overSpeeding || 0 // seconds
+        harshAcceleration: salesforceTripData.harshAcceleration || 0,
+        harshBraking: salesforceTripData.harshBraking || 0,
+        overRevving: salesforceTripData.overRevving || 0, // seconds
+        idling: salesforceTripData.idling || 0, // seconds
+        overSpeeding: salesforceTripData.overSpeeding || 0 // seconds
       },
       // Extract start and end locations from route (first and last points)
-      startLocation: foundTrip.route && foundTrip.route.length > 0 
+      startLocation: salesforceTripData.route && salesforceTripData.route.length > 0 
         ? { 
-            lat: foundTrip.route[0].lat, 
-            lng: foundTrip.route[0].lng, 
-            name: foundTrip.route[0].address || 'Start Point' 
+            lat: salesforceTripData.route[0].lat, 
+            lng: salesforceTripData.route[0].lng, 
+            name: salesforceTripData.route[0].address || 'Start Point' 
           }
         : { lat: 37.7749, lng: -122.4194, name: 'Start Point' },
-      endLocation: foundTrip.route && foundTrip.route.length > 0 
+      endLocation: salesforceTripData.route && salesforceTripData.route.length > 0 
         ? { 
-            lat: foundTrip.route[foundTrip.route.length - 1].lat, 
-            lng: foundTrip.route[foundTrip.route.length - 1].lng, 
-            name: foundTrip.route[foundTrip.route.length - 1].address || 'End Point' 
+            lat: salesforceTripData.route[salesforceTripData.route.length - 1].lat, 
+            lng: salesforceTripData.route[salesforceTripData.route.length - 1].lng, 
+            name: salesforceTripData.route[salesforceTripData.route.length - 1].address || 'End Point' 
           }
         : { lat: 37.7849, lng: -122.4094, name: 'End Point' },
-      route: foundTrip.route || [
+      route: salesforceTripData.route || [
         { lat: 37.7749, lng: -122.4194 },
         { lat: 37.7779, lng: -122.4164 },
         { lat: 37.7809, lng: -122.4134 },
         { lat: 37.7839, lng: -122.4104 },
         { lat: 37.7849, lng: -122.4094 }
       ],
-      // Detailed OBD-II data for charts with YOUR TimeData format support
-      detailedData: foundTrip.detailedData || null
+      // 🎯 YOUR TimeData format support + backward compatibility
+      detailedData: salesforceTripData.detailedData || null,
+      // Additional data from Salesforce
+      scoreBreakdown: salesforceTripData.scoreBreakdown,
+      penalties: salesforceTripData.penalties,
+      bonuses: salesforceTripData.bonuses,
+      insights: salesforceTripData.insights || [],
+      environmentalImpact: salesforceTripData.environmentalImpact
     };
-  }, [salesforceData, tripId]);
+  };
 
   // Temporary score calculation until Salesforce provides calculatedScore
   const calculateTempScore = (trip: any) => {
@@ -105,6 +164,11 @@ const TripDetailPage: React.FC = () => {
       calculatedScore: tripData.score // Use Salesforce score if available
     };
   }, [tripData]);
+
+  // Fetch trip details on component mount
+  React.useEffect(() => {
+    fetchTripDetails();
+  }, [fetchTripDetails]);
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-green-600 bg-green-50 border-green-200';
@@ -161,7 +225,7 @@ const TripDetailPage: React.FC = () => {
           <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Trip</h3>
           <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={refreshData}
+            onClick={fetchTripDetails}
             className="inline-flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
@@ -347,7 +411,7 @@ const TripDetailPage: React.FC = () => {
             <h3 className="text-xl font-semibold text-gray-900">OBD-II Analytics</h3>
             <div className="text-sm text-gray-600">
               {tripData.detailedData.TimeData 
-                ? 'Real-time data with TimeData format' 
+                ? '🎯 Using your TimeData format!' 
                 : 'Real-time data from your vehicle\'s engine control unit'}
             </div>
           </div>
@@ -404,6 +468,27 @@ const TripDetailPage: React.FC = () => {
                 timeData={tripData.detailedData.TimeData}
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Salesforce Insights */}
+      {tripData.insights && tripData.insights.length > 0 && (
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Driving Insights</h3>
+          <div className="space-y-3">
+            {tripData.insights.map((insight: any, index: number) => (
+              <div 
+                key={index}
+                className={`p-4 rounded-lg border ${
+                  insight.type === 'positive' ? 'bg-green-50 border-green-200 text-green-800' :
+                  insight.type === 'warning' ? 'bg-red-50 border-red-200 text-red-800' :
+                  'bg-blue-50 border-blue-200 text-blue-800'
+                }`}
+              >
+                <p className="text-sm">{insight.message}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
