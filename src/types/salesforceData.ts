@@ -1,4 +1,4 @@
-// Salesforce JSON Data Structure for Home Page
+// Salesforce JSON Data Structure for /tripInsights endpoint
 // This defines the exact JSON format we expect from Salesforce
 
 export interface SalesforceHomePageData {
@@ -137,7 +137,7 @@ export interface UserBaselines {
   safetyPriority: 'high' | 'medium' | 'low';
 }
 
-// Example JSON that Salesforce should send
+// Example JSON that Salesforce should send to /tripInsights endpoint
 export const exampleSalesforceResponse: SalesforceHomePageData = {
   currentWeekTripInsight: {
     startDate: "2024-01-08",
@@ -285,3 +285,22 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
     newestTripDate: "2024-01-15"
   }
 };
+
+// 📋 SALESFORCE ENDPOINT SPECIFICATION
+// 
+// Endpoint: GET /services/apexrest/voltride/tripInsights
+// 
+// Expected Response Format:
+// {
+//   "currentWeekTripInsight": { ... },
+//   "previousWeekTripInsight": { ... },
+//   "recentTrips": [ ... ],
+//   "userBaselines": { ... },
+//   "metadata": { ... }
+// }
+//
+// The frontend will:
+// 1. Call this endpoint on page load
+// 2. Process the data to calculate all metrics
+// 3. Display performance scores, insights, and comparisons
+// 4. Handle errors gracefully with fallback demo data

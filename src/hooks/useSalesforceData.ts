@@ -1,4 +1,4 @@
-// Hook to fetch and process Salesforce data
+// Hook to fetch and process Salesforce data from /tripInsights endpoint
 import { useState, useEffect } from 'react';
 import { SalesforceHomePageData, exampleSalesforceResponse } from '../types/salesforceData';
 import { SalesforceDataProcessor } from '../utils/salesforceDataProcessor';
@@ -15,13 +15,29 @@ export const useSalesforceData = () => {
     setError(null);
     
     try {
-      // In production, this would be the actual Salesforce API call
-      // const response = await fetch('/salesforce-api/services/apexrest/voltride/homepage-data');
-      // const data = await response.json();
+      console.log('🔄 Fetching trip insights from Salesforce...');
       
-      // For now, simulate API call with example data
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const data = exampleSalesforceResponse;
+      // Call the /tripInsights endpoint
+      const response = await fetch('/salesforce-api/services/apexrest/voltride/tripInsights', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Trip insights received from Salesforce:', data);
+      
+      // Validate the data structure
+      if (!data.currentWeekTripInsight || !data.previousWeekTripInsight || !data.recentTrips) {
+        console.warn('⚠️ Invalid data structure, using example data');
+        throw new Error('Invalid data structure received from Salesforce');
+      }
       
       setSalesforceData(data);
       
@@ -29,8 +45,20 @@ export const useSalesforceData = () => {
       const metrics = SalesforceDataProcessor.processHomePageData(data);
       setPerformanceMetrics(metrics);
       
+      console.log('📊 Performance metrics calculated:', metrics);
+      
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch data from Salesforce');
+      console.error('❌ Error fetching Salesforce data:', err);
+      
+      // Fallback to example data for development/demo
+      console.log('🔄 Using example data as fallback...');
+      const fallbackData = exampleSalesforceResponse;
+      setSalesforceData(fallbackData);
+      
+      const metrics = SalesforceDataProcessor.processHomePageData(fallbackData);
+      setPerformanceMetrics(metrics);
+      
+      setError(`Salesforce connection failed: ${err instanceof Error ? err.message : 'Unknown error'}. Using demo data.`);
     } finally {
       setLoading(false);
     }
