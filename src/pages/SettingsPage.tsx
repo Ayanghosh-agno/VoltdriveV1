@@ -27,6 +27,20 @@ const SettingsPage: React.FC = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Get current date and time
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    return now.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
   const handleNotificationChange = async (key: string, value: boolean) => {
     const updatedNotifications = { ...settings.notifications, [key]: value };
     await updateNotifications(updatedNotifications);
@@ -97,11 +111,9 @@ const SettingsPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
             <p className="text-gray-600 mt-1">Customize your VoltRide experience</p>
-            {settings.lastUpdated && (
-              <p className="text-xs text-gray-500 mt-1">
-                Last updated: {new Date(settings.lastUpdated).toLocaleString()}
-              </p>
-            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Last updated: {getCurrentDateTime()}
+            </p>
           </div>
         </div>
       </div>
@@ -240,23 +252,8 @@ const SettingsPage: React.FC = () => {
             )}
           </div>
 
-          {/* Vehicle Settings Form */}
+          {/* Vehicle Settings Form - Removed Vehicle Make & Model and Engine Size */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Make & Model</label>
-              {isEditingVehicle ? (
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={tempVehicleSettings.makeModel}
-                  onChange={(e) => handleVehicleSettingChange('makeModel', e.target.value)}
-                />
-              ) : (
-                <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {settings.vehicle.makeModel}
-                </div>
-              )}
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Fuel Type</label>
               {isEditingVehicle ? (
@@ -272,22 +269,6 @@ const SettingsPage: React.FC = () => {
               ) : (
                 <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
                   {settings.vehicle.fuelType}
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Engine Size (L)</label>
-              {isEditingVehicle ? (
-                <input
-                  type="number"
-                  step="0.1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={tempVehicleSettings.engineSize}
-                  onChange={(e) => handleVehicleSettingChange('engineSize', e.target.value)}
-                />
-              ) : (
-                <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {settings.vehicle.engineSize} L
                 </div>
               )}
             </div>
