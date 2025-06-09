@@ -5,6 +5,7 @@ import ToggleSwitch from '../components/ToggleSwitch';
 import EditProfileModal from '../components/EditProfileModal';
 import SaveStatusIndicator from '../components/SaveStatusIndicator';
 import { useSettings } from '../hooks/useSettings';
+import { useAuth } from '../hooks/useAuth';
 import { VehicleSettings } from '../types/settings';
 
 const SettingsPage: React.FC = () => {
@@ -22,10 +23,13 @@ const SettingsPage: React.FC = () => {
     deleteAccount
   } = useSettings();
 
+  const { logout, user } = useAuth();
+
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
   const [tempVehicleSettings, setTempVehicleSettings] = useState<VehicleSettings>(settings.vehicle);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   // Get current date and time
   const getCurrentDateTime = () => {
@@ -83,6 +87,16 @@ const SettingsPage: React.FC = () => {
       await deleteAccount();
     }
     setShowDeleteConfirm(false);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      console.log('✅ User signed out successfully');
+    } catch (error) {
+      console.error('❌ Sign out error:', error);
+    }
+    setShowSignOutConfirm(false);
   };
 
   const getInitials = (name: string) => {
@@ -542,7 +556,10 @@ const SettingsPage: React.FC = () => {
 
       {/* Sign Out */}
       <div className="pt-6 border-t border-gray-200">
-        <button className="flex items-center space-x-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+        <button 
+          onClick={() => setShowSignOutConfirm(true)}
+          className="flex items-center space-x-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+        >
           <LogOut className="h-5 w-5" />
           <span className="font-medium">Sign Out</span>
         </button>
@@ -578,6 +595,35 @@ const SettingsPage: React.FC = () => {
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Delete Account
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sign Out Confirmation */}
+      {showSignOutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <LogOut className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Sign Out</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to sign out? You'll need to log in again to access your dashboard.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowSignOutConfirm(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Sign Out
                 </button>
               </div>
             </div>

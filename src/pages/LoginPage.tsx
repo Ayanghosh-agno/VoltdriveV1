@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Car, Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import AuthService from '../services/authService';
+import { useAuth } from '../hooks/useAuth';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -13,6 +16,14 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate, location]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -34,42 +45,20 @@ const LoginPage: React.FC = () => {
     try {
       console.log('🔐 Attempting login with:', { username: formData.username });
       
-      // Get authenticated service instance
-      const authService = AuthService.getInstance();
+      const result = await login(formData.username, formData.password);
       
-      // Make login request to your Salesforce endpoint
-      const response = await authService.makeAuthenticatedRequest('/services/apexrest/voltride/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
-        }),
-      });
-
-      const data = await response.json();
-      console.log('📋 Login response:', data);
-
-      if (response.ok && data.success !== false) {
+      if (result.success) {
         console.log('✅ Login successful');
         setSuccess(true);
         
-        // Store user session data if provided
-        if (data.sessionToken) {
-          localStorage.setItem('voltride_session', data.sessionToken);
-        }
-        if (data.user) {
-          localStorage.setItem('voltride_user', JSON.stringify(data.user));
-        }
+        // Redirect to the page they were trying to access, or home
+        const from = location.state?.from?.pathname || '/';
         
-        // Redirect to dashboard after short delay
         setTimeout(() => {
-          navigate('/');
+          navigate(from, { replace: true });
         }, 1500);
       } else {
-        throw new Error(data.message || data.error || 'Login failed');
+        throw new Error(result.error || 'Login failed');
       }
     } catch (err) {
       console.error('❌ Login error:', err);
@@ -83,6 +72,26 @@ const LoginPage: React.FC = () => {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  // Show loading if checking auth status
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Car className="h-8 w-8 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">VoltRide</h2>
+            <p className="text-gray-600">Checking authentication...</p>
+          </div>
+          <div className="flex justify-center">
+            <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (

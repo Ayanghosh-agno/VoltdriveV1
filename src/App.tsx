@@ -6,24 +6,27 @@ import TripsPage from './pages/TripsPage';
 import TripDetailPage from './pages/TripDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Login page without layout */}
+        {/* Public login page */}
         <Route path="/login" element={<LoginPage />} />
         
-        {/* Main app routes with layout */}
+        {/* Protected routes with layout */}
         <Route path="/*" element={
-          <Layout>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/trips" element={<TripsPage />} />
-              <Route path="/trips/:tripId" element={<TripDetailPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Routes>
-          </Layout>
+          <ProtectedRoute>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/trips" element={<TripsPage />} />
+                <Route path="/trips/:tripId" element={<TripDetailPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Routes>
+            </Layout>
+          </ProtectedRoute>
         } />
       </Routes>
     </Router>
