@@ -32,9 +32,9 @@ export class SalesforceDataProcessor {
     const scoreBreakdown = this.calculateScoreBreakdown(currentWeekTripInsight, recentTrips, userBaselines);
     
     return {
-      drivingScore,
-      fuelEfficiency,
-      safetyRating,
+      drivingScore: Math.round(drivingScore),
+      fuelEfficiency: Math.round(fuelEfficiency),
+      safetyRating: Math.round(safetyRating),
       ...quickStats,
       insights,
       scoreBreakdown
@@ -47,7 +47,7 @@ export class SalesforceDataProcessor {
   private static createUserBaselinesFromSettings(settings: AppSettings): UserBaselines {
     return {
       averageFuelEfficiency: parseFloat(settings.vehicle.averageMileage) || 15.0,
-      targetFuelEfficiency: 15.0, // Industry standard km/l
+      targetFuelEfficiency: parseFloat(settings.vehicle.averageMileage) || 15.0, // Use same as average
       fuelCostPerLiter: settings.vehicle.fuelType === 'Petrol' ? 102 : 89, // ₹ per liter
       vehicleType: settings.vehicle.fuelType.toLowerCase() as 'petrol' | 'diesel' | 'electric',
       speedThreshold: parseFloat(settings.vehicle.speedThreshold) || 80,
@@ -85,9 +85,9 @@ export class SalesforceDataProcessor {
       // Fuel efficiency bonus/penalty
       if (trip.fuelUsed > 0 && trip.distance > 0) {
         const tripEfficiency = trip.distance / trip.fuelUsed;
-        const efficiencyRatio = tripEfficiency / userBaselines.targetFuelEfficiency;
-        if (efficiencyRatio > 1.2) tripScore += 10;
-        else if (efficiencyRatio < 0.8) tripScore -= 15;
+        const efficiencyRatio = tripEfficiency / userBaselines.averageFuelEfficiency;
+        if (efficiencyRatio > 1.1) tripScore += 10; // 10% better than claimed
+        else if (efficiencyRatio < 0.9) tripScore -= 15; // 10% worse than claimed
       }
       
       // Idling penalty
@@ -99,7 +99,7 @@ export class SalesforceDataProcessor {
       totalScore += Math.max(0, Math.min(100, tripScore));
     });
     
-    return Math.round(totalScore / recentTrips.length);
+    return totalScore / recentTrips.length;
   }
   
   /**
@@ -130,14 +130,16 @@ export class SalesforceDataProcessor {
       return 50; // Return neutral score
     }
     
-    const ratio = actualEfficiency / userBaselines.targetFuelEfficiency;
+    // Compare against vehicle's claimed mileage
+    const ratio = actualEfficiency / userBaselines.averageFuelEfficiency;
     
-    if (ratio >= 1.3) return 100;      // 30% better than target
-    if (ratio >= 1.2) return 90;       // 20% better
-    if (ratio >= 1.1) return 80;       // 10% better  
-    if (ratio >= 1.0) return 70;       // At target
-    if (ratio >= 0.9) return 60;       // 10% worse
-    if (ratio >= 0.8) return 50;       // 20% worse
+    // More realistic scoring based on vehicle's claimed efficiency
+    if (ratio >= 1.20) return 100;     // 20% better than claimed = excellent
+    if (ratio >= 1.10) return 90;      // 10% better than claimed = very good
+    if (ratio >= 1.05) return 80;      // 5% better than claimed = good
+    if (ratio >= 0.95) return 70;      // Within 5% of claimed = acceptable
+    if (ratio >= 0.90) return 60;      // 10% worse than claimed = below average
+    if (ratio >= 0.80) return 50;      // 20% worse than claimed = poor
     return Math.max(30, ratio * 50);   // Minimum 30 points
   }
   
@@ -174,7 +176,7 @@ export class SalesforceDataProcessor {
       totalSafetyScore += Math.max(0, safetyScore);
     });
     
-    return Math.round(totalSafetyScore / recentTrips.length);
+    return totalSafetyScore / recentTrips.length;
   }
   
   /**
@@ -190,12 +192,12 @@ export class SalesforceDataProcessor {
     let previousFuelSaved = 0;
     
     if (currentWeek.totalDistance > 0 && currentWeek.totalFuelUsed > 0) {
-      const expectedFuel = currentWeek.totalDistance / userBaselines.targetFuelEfficiency;
+      const expectedFuel = currentWeek.totalDistance / userBaselines.averageFuelEfficiency;
       currentFuelSaved = Math.max(0, expectedFuel - currentWeek.totalFuelUsed);
     }
     
     if (previousWeek.totalDistance > 0 && previousWeek.totalFuelUsed > 0) {
-      const previousExpectedFuel = previousWeek.totalDistance / userBaselines.targetFuelEfficiency;
+      const previousExpectedFuel = previousWeek.totalDistance / userBaselines.averageFuelEfficiency;
       previousFuelSaved = Math.max(0, previousExpectedFuel - previousWeek.totalFuelUsed);
     }
     
@@ -273,21 +275,46 @@ export class SalesforceDataProcessor {
       }
     }
     
-    if (efficiencyImprovement > 10) {
+    // Compare against vehicle's claimed mileage
+    if (currentWeek.totalFuelUsed > 0 && currentWeek.totalDistance > 0) {
+      const currentEfficiency = currentWeek.actualFuelEfficiency || 
+                               (currentWeek.totalDistance / currentWeek.totalFuelUsed);
+      const efficiencyVsClaimed = ((currentEfficiency - userBaselines.averageFuelEfficiency) / userBaselines.averageFuelEfficiency) * 100;
+      
+      if (efficiencyVsClaimed > 10) {
+        insights.push({
+          type: 'positive',
+          icon: 'trending-up',
+          title: 'Exceeding vehicle specifications!',
+          description: `You're getting ${Math.round(efficiencyVsClaimed)}% better fuel efficiency than your vehicle's claimed ${userBaselines.averageFuelEfficiency} km/l.`,
+          color: 'green'
+        });
+      } else if (efficiencyVsClaimed < -15) {
+        insights.push({
+          type: 'warning',
+          icon: 'fuel',
+          title: 'Below expected fuel efficiency',
+          description: `Your efficiency is ${Math.abs(Math.round(efficiencyVsClaimed))}% below your vehicle's claimed ${userBaselines.averageFuelEfficiency} km/l. Check driving habits and vehicle maintenance.`,
+          color: 'amber'
+        });
+      } else if (Math.abs(efficiencyVsClaimed) <= 5) {
+        insights.push({
+          type: 'positive',
+          icon: 'check-circle',
+          title: 'Meeting vehicle specifications',
+          description: `Your fuel efficiency is close to your vehicle's claimed ${userBaselines.averageFuelEfficiency} km/l. Great job!`,
+          color: 'blue'
+        });
+      }
+    }
+    
+    if (efficiencyImprovement > 5) {
       insights.push({
         type: 'positive',
         icon: 'trending-up',
-        title: 'Great fuel efficiency improvement!',
-        description: `You improved fuel efficiency by ${Math.round(efficiencyImprovement)}% this week.`,
+        title: 'Fuel efficiency improved!',
+        description: `You improved fuel efficiency by ${Math.round(efficiencyImprovement)}% this week compared to last week.`,
         color: 'green'
-      });
-    } else if (efficiencyImprovement < -10) {
-      insights.push({
-        type: 'warning',
-        icon: 'fuel',
-        title: 'Fuel efficiency decreased',
-        description: `Try maintaining steady speeds and gentle acceleration to improve efficiency.`,
-        color: 'amber'
       });
     }
     

@@ -110,9 +110,9 @@ export class PerformanceCalculator {
     const scoreBreakdown = this.calculateScoreBreakdown(currentTrips, baselines);
     
     return {
-      drivingScore,
-      fuelEfficiency,
-      safetyRating,
+      drivingScore: Math.round(drivingScore),
+      fuelEfficiency: Math.round(fuelEfficiency),
+      safetyRating: Math.round(safetyRating),
       ...quickStats,
       insights,
       scoreBreakdown
@@ -128,7 +128,7 @@ export class PerformanceCalculator {
     const breakdown = this.calculateScoreBreakdown(trips, baselines);
     
     // Weighted average
-    return Math.round(
+    return (
       breakdown.safety * 0.35 +
       breakdown.efficiency * 0.25 +
       breakdown.smoothness * 0.25 +
@@ -148,16 +148,16 @@ export class PerformanceCalculator {
     if (totalFuel === 0) return 0;
     
     const actualEfficiency = totalDistance / totalFuel; // km/l
-    const targetEfficiency = baselines.targetFuelEfficiency;
-    const ratio = actualEfficiency / targetEfficiency;
+    const vehicleClaimedEfficiency = baselines.averageFuelEfficiency;
+    const ratio = actualEfficiency / vehicleClaimedEfficiency;
     
-    // Convert ratio to 0-100 score
-    if (ratio >= 1.3) return 100;      // 30% better than target
-    if (ratio >= 1.2) return 90;       // 20% better
-    if (ratio >= 1.1) return 80;       // 10% better  
-    if (ratio >= 1.0) return 70;       // At target
-    if (ratio >= 0.9) return 60;       // 10% worse
-    if (ratio >= 0.8) return 50;       // 20% worse
+    // More realistic scoring based on vehicle's claimed efficiency
+    if (ratio >= 1.20) return 100;     // 20% better than claimed = excellent
+    if (ratio >= 1.10) return 90;      // 10% better than claimed = very good
+    if (ratio >= 1.05) return 80;      // 5% better than claimed = good
+    if (ratio >= 0.95) return 70;      // Within 5% of claimed = acceptable
+    if (ratio >= 0.90) return 60;      // 10% worse than claimed = below average
+    if (ratio >= 0.80) return 50;      // 20% worse than claimed = poor
     return Math.max(30, ratio * 50);   // Minimum 30 points
   }
   
@@ -179,7 +179,7 @@ export class PerformanceCalculator {
       totalWeight += weight;
     });
     
-    return Math.round(weightedSum / totalWeight);
+    return weightedSum / totalWeight;
   }
   
   /**
@@ -239,12 +239,12 @@ export class PerformanceCalculator {
       ? previousTrips.reduce((sum, trip) => sum + trip.avgSpeed, 0) / previousTrips.length 
       : 0;
     
-    // Calculate fuel savings in ₹
-    const expectedFuel = currentDistance / baselines.targetFuelEfficiency;
+    // Calculate fuel savings in ₹ based on vehicle's claimed efficiency
+    const expectedFuel = currentDistance / baselines.averageFuelEfficiency;
     const fuelSaved = Math.max(0, expectedFuel - currentFuel);
     const moneySaved = fuelSaved * baselines.fuelCostPerLiter;
     
-    const previousExpectedFuel = previousDistance / baselines.targetFuelEfficiency;
+    const previousExpectedFuel = previousDistance / baselines.averageFuelEfficiency;
     const previousFuelSaved = Math.max(0, previousExpectedFuel - previousFuel);
     const previousMoneySaved = previousFuelSaved * baselines.fuelCostPerLiter;
     
@@ -293,7 +293,7 @@ export class PerformanceCalculator {
     const totalDistance = trips.reduce((sum, trip) => sum + trip.distance, 0);
     const totalFuel = trips.reduce((sum, trip) => sum + trip.fuelUsed, 0);
     const actualEfficiency = totalDistance / totalFuel;
-    const efficiencyImprovement = ((actualEfficiency - baselines.targetFuelEfficiency) / baselines.targetFuelEfficiency) * 100;
+    const efficiencyVsClaimed = ((actualEfficiency - baselines.averageFuelEfficiency) / baselines.averageFuelEfficiency) * 100;
     
     const totalHarshEvents = trips.reduce((sum, trip) => 
       sum + trip.harshAcceleration + trip.harshBraking, 0);
@@ -301,22 +301,30 @@ export class PerformanceCalculator {
     
     const avgIdlingTime = trips.reduce((sum, trip) => sum + trip.idling, 0) / trips.length / 60; // minutes
     
-    // Fuel efficiency insight
-    if (efficiencyImprovement > 15) {
+    // Fuel efficiency insight compared to vehicle's claimed mileage
+    if (efficiencyVsClaimed > 10) {
       insights.push({
         type: 'positive',
         icon: 'trending-up',
-        title: 'Excellent fuel efficiency!',
-        description: `You saved ${Math.round(efficiencyImprovement)}% more fuel than average.`,
+        title: 'Exceeding vehicle specifications!',
+        description: `You're getting ${Math.round(efficiencyVsClaimed)}% better fuel efficiency than your vehicle's claimed ${baselines.averageFuelEfficiency} km/l.`,
         color: 'green'
       });
-    } else if (efficiencyImprovement < -15) {
+    } else if (efficiencyVsClaimed < -15) {
       insights.push({
         type: 'warning',
         icon: 'fuel',
-        title: 'Fuel consumption is high',
-        description: `Try maintaining steady speeds and gentle acceleration to improve efficiency.`,
+        title: 'Below expected fuel efficiency',
+        description: `Your efficiency is ${Math.abs(Math.round(efficiencyVsClaimed))}% below your vehicle's claimed ${baselines.averageFuelEfficiency} km/l.`,
         color: 'amber'
+      });
+    } else if (Math.abs(efficiencyVsClaimed) <= 5) {
+      insights.push({
+        type: 'positive',
+        icon: 'check-circle',
+        title: 'Meeting vehicle specifications',
+        description: `Your fuel efficiency is close to your vehicle's claimed ${baselines.averageFuelEfficiency} km/l.`,
+        color: 'blue'
       });
     }
     
