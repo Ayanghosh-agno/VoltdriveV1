@@ -88,52 +88,13 @@ This document specifies the exact JSON structure that your Salesforce API should
     "roadType": "city",          // city, highway, residential, rural
     "trafficCondition": "moderate", // light, moderate, heavy
     
-    // Optional: Detailed OBD-II Data for Advanced Analytics WITH TIME DATA
+    // 🎯 YOUR REQUESTED FORMAT: Detailed OBD-II Data with Time
     "detailedData": {
-      "dataInterval": 5,  // seconds between each reading
-      "startTimestamp": "2024-01-15T08:30:00Z", // ISO timestamp when trip started
-      
-      // Time-based readings (each array has same length)
-      "timeData": [
-        {
-          "timeOffset": 0,      // seconds from trip start
-          "timestamp": "2024-01-15T08:30:00Z",
-          "speed": 42,          // km/hr
-          "rpm": 1800,          // RPM
-          "throttle": 25,       // %
-          "engineLoad": 45      // %
-        },
-        {
-          "timeOffset": 5,      // 5 seconds later
-          "timestamp": "2024-01-15T08:30:05Z",
-          "speed": 38,
-          "rpm": 1650,
-          "throttle": 20,
-          "engineLoad": 38
-        },
-        {
-          "timeOffset": 10,     // 10 seconds later
-          "timestamp": "2024-01-15T08:30:10Z",
-          "speed": 45,
-          "rpm": 2100,
-          "throttle": 35,
-          "engineLoad": 52
-        }
-        // ... continue for entire trip duration
-      ],
-      
-      // Alternative: Separate arrays with explicit timestamps (if you prefer this format)
-      "timestamps": [
-        "2024-01-15T08:30:00Z",
-        "2024-01-15T08:30:05Z", 
-        "2024-01-15T08:30:10Z",
-        "2024-01-15T08:30:15Z"
-        // ... one timestamp per data point
-      ],
-      "speedProfile": [42, 38, 45, 52],
-      "rpmProfile": [1800, 1650, 2100, 2400],
-      "throttleProfile": [25, 20, 35, 45],
-      "engineLoadProfile": [45, 38, 52, 62]
+      "TimeData": ["8:10", "8:12", "8:15", "8:18", "8:20", "8:22", "8:25"],
+      "SpeedProfile": [42, 38, 45, 52, 48, 41, 39],
+      "ThrottleProfile": [25, 20, 35, 45, 40, 28, 22],
+      "RpmProfile": [1800, 1650, 2100, 2400, 2200, 1900, 1750],
+      "EngineLoadProfile": [45, 38, 52, 62, 58, 48, 42]
     },
     
     // Calculated Environmental Impact
@@ -147,83 +108,46 @@ This document specifies the exact JSON structure that your Salesforce API should
 }
 ```
 
-## 🎯 **Two Options for Time Data:**
+## 🎯 **Your Requested Time Data Format:**
 
-### **Option 1: Combined Time Data Objects (Recommended)**
 ```json
 "detailedData": {
-  "dataInterval": 5,  // seconds between readings
-  "startTimestamp": "2024-01-15T08:30:00Z",
-  "timeData": [
-    {
-      "timeOffset": 0,
-      "timestamp": "2024-01-15T08:30:00Z",
-      "speed": 42,
-      "rpm": 1800,
-      "throttle": 25,
-      "engineLoad": 45
-    }
-    // ... more data points
-  ]
+  "TimeData": ["8:10", "8:12", "8:15", "8:18", "8:20", "8:22", "8:25"],
+  "SpeedProfile": [42, 38, 45, 52, 48, 41, 39],
+  "ThrottleProfile": [25, 20, 35, 45, 40, 28, 22], 
+  "RpmProfile": [1800, 1650, 2100, 2400, 2200, 1900, 1750],
+  "EngineLoadProfile": [45, 38, 52, 62, 58, 48, 42]
 }
 ```
 
-### **Option 2: Separate Arrays with Timestamps**
+## 📋 **Key Points:**
+
+1. **TimeData Array**: Contains time strings in "H:MM" format (e.g., "8:10", "8:12")
+2. **All Arrays Same Length**: TimeData, SpeedProfile, ThrottleProfile, RpmProfile, and EngineLoadProfile must have the same number of elements
+3. **Index Correspondence**: TimeData[0] corresponds to SpeedProfile[0], ThrottleProfile[0], etc.
+4. **Time Format**: Use "H:MM" or "HH:MM" format for times (e.g., "8:10" or "08:10")
+
+## 🚀 **Example with More Data Points:**
+
 ```json
 "detailedData": {
-  "timestamps": ["2024-01-15T08:30:00Z", "2024-01-15T08:30:05Z", ...],
-  "speedProfile": [42, 38, 45, 52, ...],
-  "rpmProfile": [1800, 1650, 2100, 2400, ...],
-  "throttleProfile": [25, 20, 35, 45, ...],
-  "engineLoadProfile": [45, 38, 52, 62, ...]
+  "TimeData": [
+    "8:30", "8:31", "8:32", "8:33", "8:34", "8:35", 
+    "8:36", "8:37", "8:38", "8:39", "8:40"
+  ],
+  "SpeedProfile": [0, 15, 25, 35, 45, 50, 55, 48, 42, 38, 35],
+  "ThrottleProfile": [0, 30, 40, 45, 35, 30, 25, 20, 15, 10, 8],
+  "RpmProfile": [800, 1200, 1500, 1800, 2000, 2200, 2100, 1900, 1700, 1500, 1400],
+  "EngineLoadProfile": [10, 25, 35, 45, 50, 55, 52, 48, 42, 38, 35]
 }
 ```
 
-## 📊 **Benefits of Including Time Data:**
+## ✅ **Benefits:**
 
-1. **Precise Time Axis**: Charts show exact timestamps instead of calculated intervals
-2. **Variable Intervals**: Support for non-uniform data collection intervals
-3. **Better Synchronization**: All sensor readings are perfectly aligned in time
-4. **Event Correlation**: Can correlate driving events with specific timestamps
-5. **Replay Capability**: Can replay the trip with exact timing
+- **Simple Format**: Easy to generate from Salesforce
+- **Time Precision**: Exact time stamps for each data point
+- **Synchronized Data**: All sensor readings perfectly aligned
+- **Chart Ready**: Frontend can directly use this for time-based charts
+- **Flexible Intervals**: Support for variable time intervals between readings
 
-## 🔧 **Frontend Usage:**
-
-The frontend will automatically detect which format you're using:
-
-```typescript
-// Option 1: Combined time data
-if (tripData.detailedData?.timeData) {
-  const chartData = tripData.detailedData.timeData.map(point => ({
-    time: new Date(point.timestamp).toLocaleTimeString(),
-    speed: point.speed,
-    rpm: point.rpm,
-    // ... other values
-  }));
-}
-
-// Option 2: Separate arrays with timestamps
-else if (tripData.detailedData?.timestamps) {
-  const chartData = tripData.detailedData.timestamps.map((timestamp, index) => ({
-    time: new Date(timestamp).toLocaleTimeString(),
-    speed: tripData.detailedData.speedProfile[index],
-    rpm: tripData.detailedData.rpmProfile[index],
-    // ... other values
-  }));
-}
-
-// Fallback: Calculate time from trip duration (current method)
-else {
-  // Current implementation remains as fallback
-}
-```
-
-## 🚀 **Recommendation:**
-
-Use **Option 1 (Combined Time Data Objects)** as it's:
-- More structured and easier to maintain
-- Ensures all data points are perfectly synchronized
-- Allows for variable data collection intervals
-- Easier to extend with additional sensor data
-
-The frontend will automatically handle whichever format you choose to implement! 🎯
+The frontend will automatically detect this format and create beautiful time-based charts! 📊

@@ -8,7 +8,7 @@ interface AnalyticsChartProps {
   unit: string;
   yAxisDomain?: [number, number];
   tripDuration?: number; // minutes - for fallback calculation
-  timestamps?: string[]; // optional timestamps array
+  timeData?: string[]; // NEW: TimeData array from your format
 }
 
 interface TimeDataPoint {
@@ -24,16 +24,26 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
   unit, 
   yAxisDomain,
   tripDuration,
-  timestamps
+  timeData
 }) => {
-  // Convert data to chart format with intelligent time handling
+  // Convert data to chart format with your TimeData format support
   const chartData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
     
-    // Option 1: Data is already time-based objects
+    // 🎯 YOUR FORMAT: TimeData array with corresponding data arrays
+    if (timeData && timeData.length === data.length) {
+      return (data as number[]).map((value, index) => ({
+        time: timeData[index], // Use your time format directly (e.g., "8:10", "8:12")
+        timeInSeconds: index * 60, // Approximate seconds for sorting
+        value: Math.round(value * 10) / 10,
+        index: index
+      }));
+    }
+    
+    // Option 2: Data is already time-based objects (existing support)
     if (typeof data[0] === 'object' && 'timestamp' in data[0]) {
-      const timeData = data as TimeDataPoint[];
-      return timeData.map((point, index) => ({
+      const timeDataPoints = data as TimeDataPoint[];
+      return timeDataPoints.map((point, index) => ({
         time: new Date(point.timestamp).toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit',
@@ -41,20 +51,6 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
         }),
         timeInSeconds: point.timeOffset,
         value: Math.round(point.value * 10) / 10,
-        index: index
-      }));
-    }
-    
-    // Option 2: Separate timestamps array provided
-    if (timestamps && timestamps.length === data.length) {
-      return (data as number[]).map((value, index) => ({
-        time: new Date(timestamps[index]).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        }),
-        timeInSeconds: index * 5, // Assume 5-second intervals as fallback
-        value: Math.round(value * 10) / 10,
         index: index
       }));
     }
@@ -84,7 +80,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
       value: Math.round(value * 10) / 10,
       index: index
     }));
-  }, [data, tripDuration, timestamps]);
+  }, [data, tripDuration, timeData]);
 
   // Calculate statistics
   const stats = React.useMemo(() => {
@@ -200,7 +196,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
       <div className="mt-3 flex justify-between items-center text-xs text-gray-500">
         <span>{data.length} data points</span>
         <span>
-          {timestamps ? 'Real timestamps' : 
+          {timeData ? 'TimeData format' : 
            tripDuration ? `Duration: ${Math.floor(tripDuration)} minutes` : 
            'Calculated intervals'}
         </span>

@@ -61,7 +61,7 @@ const TripDetailPage: React.FC = () => {
         { lat: 37.7839, lng: -122.4104 },
         { lat: 37.7849, lng: -122.4094 }
       ],
-      // Detailed OBD-II data for charts with time support
+      // Detailed OBD-II data for charts with YOUR TimeData format support
       detailedData: foundTrip.detailedData || null
     };
   }, [salesforceData, tripId]);
@@ -105,31 +105,6 @@ const TripDetailPage: React.FC = () => {
       calculatedScore: tripData.score // Use Salesforce score if available
     };
   }, [tripData]);
-
-  // Prepare chart data with time support
-  const prepareChartData = (profileData: any, dataType: string) => {
-    if (!profileData) return null;
-    
-    // Check if data includes time information
-    if (tripData?.detailedData?.timeData) {
-      // Option 1: Combined time data objects
-      return tripData.detailedData.timeData.map(point => ({
-        timeOffset: point.timeOffset,
-        timestamp: point.timestamp,
-        value: point[dataType] || 0
-      }));
-    } else if (tripData?.detailedData?.timestamps) {
-      // Option 2: Separate timestamps array
-      return profileData.map((value: number, index: number) => ({
-        timeOffset: index * 5, // Assume 5-second intervals
-        timestamp: tripData.detailedData.timestamps[index],
-        value: value
-      }));
-    } else {
-      // Option 3: Fallback to array of numbers
-      return profileData;
-    }
-  };
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-green-600 bg-green-50 border-green-200';
@@ -365,68 +340,68 @@ const TripDetailPage: React.FC = () => {
         />
       </div>
 
-      {/* Analytics Charts - Enhanced with Time Support */}
+      {/* Analytics Charts - Enhanced with YOUR TimeData Format Support */}
       {tripData.detailedData && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-semibold text-gray-900">OBD-II Analytics</h3>
             <div className="text-sm text-gray-600">
-              {tripData.detailedData.timeData || tripData.detailedData.timestamps 
-                ? 'Real-time data with precise timestamps' 
+              {tripData.detailedData.TimeData 
+                ? 'Real-time data with TimeData format' 
                 : 'Real-time data from your vehicle\'s engine control unit'}
             </div>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Speed Profile */}
-            {(tripData.detailedData.speedProfile || tripData.detailedData.timeData) && (
+            {/* Speed Profile with TimeData support */}
+            {(tripData.detailedData.SpeedProfile || tripData.detailedData.speedProfile) && (
               <AnalyticsChart 
                 title="Speed Over Time" 
-                data={prepareChartData(tripData.detailedData.speedProfile, 'speed') || tripData.detailedData.speedProfile}
+                data={tripData.detailedData.SpeedProfile || tripData.detailedData.speedProfile}
                 color="#3B82F6"
                 unit="km/hr"
-                yAxisDomain={[0, Math.max(...(tripData.detailedData.speedProfile || [100])) + 10]}
+                yAxisDomain={[0, Math.max(...(tripData.detailedData.SpeedProfile || tripData.detailedData.speedProfile || [100])) + 10]}
                 tripDuration={tripData.duration}
-                timestamps={tripData.detailedData.timestamps}
+                timeData={tripData.detailedData.TimeData}
               />
             )}
             
-            {/* RPM Profile */}
-            {(tripData.detailedData.rpmProfile || tripData.detailedData.timeData) && (
+            {/* RPM Profile with TimeData support */}
+            {(tripData.detailedData.RpmProfile || tripData.detailedData.rpmProfile) && (
               <AnalyticsChart 
                 title="Engine RPM Over Time" 
-                data={prepareChartData(tripData.detailedData.rpmProfile, 'rpm') || tripData.detailedData.rpmProfile}
+                data={tripData.detailedData.RpmProfile || tripData.detailedData.rpmProfile}
                 color="#10B981"
                 unit="RPM"
-                yAxisDomain={[0, Math.max(...(tripData.detailedData.rpmProfile || [3000])) + 200]}
+                yAxisDomain={[0, Math.max(...(tripData.detailedData.RpmProfile || tripData.detailedData.rpmProfile || [3000])) + 200]}
                 tripDuration={tripData.duration}
-                timestamps={tripData.detailedData.timestamps}
+                timeData={tripData.detailedData.TimeData}
               />
             )}
             
-            {/* Engine Load Profile */}
-            {(tripData.detailedData.engineLoadProfile || tripData.detailedData.timeData) && (
+            {/* Engine Load Profile with TimeData support */}
+            {(tripData.detailedData.EngineLoadProfile || tripData.detailedData.engineLoadProfile) && (
               <AnalyticsChart 
                 title="Engine Load Over Time" 
-                data={prepareChartData(tripData.detailedData.engineLoadProfile, 'engineLoad') || tripData.detailedData.engineLoadProfile}
+                data={tripData.detailedData.EngineLoadProfile || tripData.detailedData.engineLoadProfile}
                 color="#F59E0B"
                 unit="%"
                 yAxisDomain={[0, 100]}
                 tripDuration={tripData.duration}
-                timestamps={tripData.detailedData.timestamps}
+                timeData={tripData.detailedData.TimeData}
               />
             )}
             
-            {/* Throttle Profile */}
-            {(tripData.detailedData.throttleProfile || tripData.detailedData.timeData) && (
+            {/* Throttle Profile with TimeData support */}
+            {(tripData.detailedData.ThrottleProfile || tripData.detailedData.throttleProfile) && (
               <AnalyticsChart 
                 title="Throttle Position Over Time" 
-                data={prepareChartData(tripData.detailedData.throttleProfile, 'throttle') || tripData.detailedData.throttleProfile}
+                data={tripData.detailedData.ThrottleProfile || tripData.detailedData.throttleProfile}
                 color="#8B5CF6"
                 unit="%"
                 yAxisDomain={[0, 100]}
                 tripDuration={tripData.duration}
-                timestamps={tripData.detailedData.timestamps}
+                timeData={tripData.detailedData.TimeData}
               />
             )}
           </div>
