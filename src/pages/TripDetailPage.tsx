@@ -31,7 +31,7 @@ const TripDetailPage: React.FC = () => {
       const authService = AuthService.getInstance();
       
       // Make authenticated request to your new endpoint
-      const response = await authService.makeAuthenticatedRequest(`/services/apexrest/voltride/tripDetails/${tripId}`, {
+      const response = await authService.makeAuthenticatedRequest(`/services/apexrest/voltride/tripDetail/${tripId}`, {
         method: 'GET',
       });
 
