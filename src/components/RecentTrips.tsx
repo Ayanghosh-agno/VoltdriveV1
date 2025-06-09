@@ -6,6 +6,7 @@ const RecentTrips: React.FC = () => {
   const recentTrips = [
     {
       id: 1,
+      tripId: 'trip_001',
       tripNumber: 'Trip - 0001',
       time: '8:30 AM',
       distance: '20.1 km',
@@ -14,6 +15,7 @@ const RecentTrips: React.FC = () => {
     },
     {
       id: 2,
+      tripId: 'trip_002',
       tripNumber: 'Trip - 0002',
       time: '6:00 PM',
       distance: '13.2 km',
@@ -22,6 +24,7 @@ const RecentTrips: React.FC = () => {
     },
     {
       id: 3,
+      tripId: 'trip_003',
       tripNumber: 'Trip - 0003',
       time: '7:15 AM',
       distance: '8.2 km',
@@ -45,7 +48,7 @@ const RecentTrips: React.FC = () => {
         {recentTrips.map((trip) => (
           <Link 
             key={trip.id}
-            to={`/trips/${trip.id}`}
+            to={`/trips/${trip.tripId}`}
             className="block"
           >
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">

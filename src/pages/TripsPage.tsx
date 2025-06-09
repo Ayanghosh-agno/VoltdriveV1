@@ -17,6 +17,7 @@ const TripsPage: React.FC = () => {
   const allTrips = [
     {
       id: 1,
+      tripId: 'trip_001',
       tripNumber: 'Trip - 0001',
       date: '2024-01-15',
       startTime: '08:30 AM',
@@ -31,6 +32,7 @@ const TripsPage: React.FC = () => {
     },
     {
       id: 2,
+      tripId: 'trip_002',
       tripNumber: 'Trip - 0002',
       date: '2024-01-15',
       startTime: '06:00 PM',
@@ -45,6 +47,7 @@ const TripsPage: React.FC = () => {
     },
     {
       id: 3,
+      tripId: 'trip_003',
       tripNumber: 'Trip - 0003',
       date: '2024-01-14',
       startTime: '07:45 AM',
@@ -59,6 +62,7 @@ const TripsPage: React.FC = () => {
     },
     {
       id: 4,
+      tripId: 'trip_004',
       tripNumber: 'Trip - 0004',
       date: '2024-01-13',
       startTime: '02:15 PM',
@@ -73,6 +77,7 @@ const TripsPage: React.FC = () => {
     },
     {
       id: 5,
+      tripId: 'trip_005',
       tripNumber: 'Trip - 0005',
       date: '2024-01-12',
       startTime: '09:00 AM',
@@ -87,6 +92,7 @@ const TripsPage: React.FC = () => {
     },
     {
       id: 6,
+      tripId: 'trip_006',
       tripNumber: 'Trip - 0006',
       date: '2024-01-11',
       startTime: '05:30 PM',

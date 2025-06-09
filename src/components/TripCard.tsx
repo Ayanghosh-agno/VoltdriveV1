@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 interface TripCardProps {
   trip: {
     id: number;
+    tripId: string;
     tripNumber: string;
     date: string;
     startTime: string;
@@ -39,7 +40,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip }) => {
   };
 
   return (
-    <Link to={`/trips/${trip.id}`} className="block">
+    <Link to={`/trips/${trip.tripId}`} className="block">
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4">
           <div className="flex items-center space-x-4 mb-3 lg:mb-0">

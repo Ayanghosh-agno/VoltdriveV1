@@ -12,8 +12,8 @@ const TripDetailPage: React.FC = () => {
 
   // Mock trip data - in real app, this would be fetched based on tripId
   const tripData = {
-    id: parseInt(tripId || '1'),
-    tripNumber: `Trip - ${String(tripId).padStart(4, '0')}`,
+    id: tripId || 'trip_001',
+    tripNumber: `Trip - ${tripId?.replace('trip_', '').padStart(4, '0') || '0001'}`,
     date: '2024-01-15',
     startTime: '08:30 AM',
     endTime: '09:15 AM',
@@ -77,6 +77,7 @@ const TripDetailPage: React.FC = () => {
               day: 'numeric'
             })} • {tripData.startTime} - {tripData.endTime}
           </p>
+          <p className="text-sm text-gray-500 mt-1">Trip ID: {tripId}</p>
         </div>
         <div className={`ml-auto px-4 py-2 rounded-lg border ${getScoreColor(scoreBreakdown.overall)}`}>
           <div className="flex items-center space-x-2">
