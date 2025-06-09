@@ -35,9 +35,9 @@ export const useSalesforceData = () => {
       const data = await response.json();
       console.log('✅ Trip insights received from Salesforce:', data);
       
-      // Check if this is a demo mode response
-      if (data.mode === 'demo' || data.success === false) {
-        console.log('🔄 Demo mode detected, using example data...');
+      // Check if this is a local storage response
+      if (data.success === false) {
+        console.log('🔄 Local storage mode detected, using example data...');
         const fallbackData = exampleSalesforceResponse;
         setSalesforceData(fallbackData);
         
@@ -45,7 +45,7 @@ export const useSalesforceData = () => {
         const metrics = SalesforceDataProcessor.processHomePageData(fallbackData, settings);
         setPerformanceMetrics(metrics);
         
-        setError('Running in demo mode - Salesforce integration not available');
+        setError('Using local data - Salesforce integration not available');
         return;
       }
       
@@ -66,7 +66,7 @@ export const useSalesforceData = () => {
     } catch (err) {
       console.error('❌ Error fetching Salesforce data:', err);
       
-      // Fallback to example data for development/demo
+      // Fallback to example data for development
       console.log('🔄 Using example data as fallback...');
       const fallbackData = exampleSalesforceResponse;
       setSalesforceData(fallbackData);
@@ -75,7 +75,7 @@ export const useSalesforceData = () => {
       const metrics = SalesforceDataProcessor.processHomePageData(fallbackData, settings);
       setPerformanceMetrics(metrics);
       
-      setError(`Salesforce connection failed: ${err instanceof Error ? err.message : 'Unknown error'}. Using demo data.`);
+      setError(`Connection failed: ${err instanceof Error ? err.message : 'Unknown error'}. Using local data.`);
     } finally {
       setLoading(false);
     }

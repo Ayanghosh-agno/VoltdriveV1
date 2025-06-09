@@ -26,15 +26,14 @@ exports.handler = async (event, context) => {
         statusCode: 401,
         headers,
         body: JSON.stringify({
-          error: 'No authorization header provided',
-          mode: 'demo'
+          error: 'No authorization header provided'
         }),
       };
     }
 
-    // Check if this is a demo token
-    if (event.headers.authorization.includes('demo_token_')) {
-      console.log('Demo token detected, returning mock response');
+    // Check if this is a local token
+    if (event.headers.authorization.includes('local_token_')) {
+      console.log('Local token detected, returning mock response');
       
       // Return appropriate mock responses based on the endpoint
       const pathParts = event.path.split('/salesforce-api');
@@ -42,7 +41,7 @@ exports.handler = async (event, context) => {
       
       let mockResponse = {
         success: true,
-        message: 'Demo mode response',
+        message: 'Local storage response',
         timestamp: new Date().toISOString()
       };
 
@@ -51,12 +50,12 @@ exports.handler = async (event, context) => {
           mockResponse = {
             success: true,
             settings: null,
-            message: 'No settings found in demo mode'
+            message: 'No settings found in local storage'
           };
         } else {
           mockResponse = {
             success: true,
-            message: 'Settings saved in demo mode'
+            message: 'Settings saved in local storage'
           };
         }
       }
@@ -112,15 +111,14 @@ exports.handler = async (event, context) => {
   } catch (error) {
     console.error('Salesforce API function error:', error);
     
-    // Return demo mode response on error
+    // Return local storage response on error
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: false,
         error: 'Salesforce API connection failed',
-        mode: 'demo',
-        message: 'Running in demo mode due to API connection error',
+        message: 'Using local storage due to API connection error',
         details: error.message
       }),
     };

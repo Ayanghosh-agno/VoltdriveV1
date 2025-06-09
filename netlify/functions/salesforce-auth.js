@@ -24,16 +24,15 @@ exports.handler = async (event, context) => {
     const clientId = process.env.VITE_SALESFORCE_CLIENT_ID || process.env.SALESFORCE_CLIENT_ID;
     const clientSecret = process.env.VITE_SALESFORCE_CLIENT_SECRET || process.env.SALESFORCE_CLIENT_SECRET;
     
-    if (!clientId || !clientSecret || clientId === 'default_client_id') {
-      console.log('Salesforce credentials not configured, returning demo mode response');
+    if (!clientId || !clientSecret) {
+      console.log('Salesforce credentials not configured, returning local storage response');
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: false,
           error: 'Salesforce not configured',
-          mode: 'demo',
-          message: 'Running in demo mode - configure Salesforce environment variables for production'
+          message: 'Using local storage - configure Salesforce environment variables for production'
         }),
       };
     }
@@ -76,15 +75,14 @@ exports.handler = async (event, context) => {
   } catch (error) {
     console.error('Salesforce auth function error:', error);
     
-    // Return demo mode response on error
+    // Return local storage response on error
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: false,
         error: 'Salesforce connection failed',
-        mode: 'demo',
-        message: 'Running in demo mode due to connection error',
+        message: 'Using local storage due to connection error',
         details: error.message
       }),
     };

@@ -44,7 +44,7 @@ export const useSettings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
-  const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; mode: 'production' | 'demo' }>({ connected: false, mode: 'demo' });
+  const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; mode: 'production' | 'local' }>({ connected: false, mode: 'local' });
 
   const apiService = SettingsApiService.getInstance();
 
@@ -59,7 +59,7 @@ export const useSettings = () => {
       setConnectionStatus(status);
       console.log(`🔗 Connection status: ${status.mode} mode, connected: ${status.connected}`);
     } catch (error) {
-      setConnectionStatus({ connected: false, mode: 'demo' });
+      setConnectionStatus({ connected: false, mode: 'local' });
     }
   };
 

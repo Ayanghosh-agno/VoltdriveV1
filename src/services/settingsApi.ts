@@ -60,7 +60,7 @@ class SettingsApiService {
       return {
         success: true,
         data: settings,
-        message: 'Settings saved locally (Salesforce sync will retry automatically)'
+        message: 'Settings saved locally'
       };
     }
   }
@@ -311,12 +311,12 @@ class SettingsApiService {
   /**
    * Check if Salesforce integration is working
    */
-  async checkConnection(): Promise<{ connected: boolean; mode: 'production' | 'demo' }> {
+  async checkConnection(): Promise<{ connected: boolean; mode: 'production' | 'local' }> {
     try {
       const configStatus = this.authService.getConfigStatus();
       
       if (!configStatus.configured) {
-        return { connected: false, mode: 'demo' };
+        return { connected: false, mode: 'local' };
       }
 
       // Try a simple API call to test connection
@@ -327,10 +327,10 @@ class SettingsApiService {
       const connected = response.ok;
       return { 
         connected, 
-        mode: connected ? 'production' : 'demo' 
+        mode: connected ? 'production' : 'local' 
       };
     } catch (error) {
-      return { connected: false, mode: 'demo' };
+      return { connected: false, mode: 'local' };
     }
   }
 }
