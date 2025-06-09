@@ -3,6 +3,8 @@
 ## Overview
 This document specifies the exact JSON structure that your Salesforce API should return for individual trip details. The frontend expects this data when calling `/services/apexrest/voltride/tripDetails/{tripId}`.
 
+**IMPORTANT:** You do NOT need to send `startLocation` and `endLocation` separately. The frontend will automatically extract the start location from the first point in the route array and the end location from the last point.
+
 ## Complete Trip Detail JSON Structure
 
 ```json
@@ -32,28 +34,16 @@ This document specifies the exact JSON structure that your Salesforce API should
     "idling": 180,              // seconds spent idling
     "overRevving": 15,          // seconds spent over-revving
     
-    // Location Data (GPS coordinates)
-    "startLocation": {
-      "latitude": 19.0760,
-      "longitude": 72.8777,
-      "address": "Bandra West, Mumbai"
-    },
-    "endLocation": {
-      "latitude": 19.0176,
-      "longitude": 72.8562,
-      "address": "Lower Parel, Mumbai"
-    },
-    
-    // Route Path (array of GPS coordinates for map display)
+    // Route Path (GPS coordinates - FIRST = START, LAST = END)
     "route": [
-      { "lat": 19.0760, "lng": 72.8777 },
+      { "lat": 19.0760, "lng": 72.8777, "address": "Bandra West, Mumbai" },      // START LOCATION
       { "lat": 19.0750, "lng": 72.8767 },
       { "lat": 19.0740, "lng": 72.8757 },
       { "lat": 19.0730, "lng": 72.8747 },
       { "lat": 19.0720, "lng": 72.8737 },
       { "lat": 19.0710, "lng": 72.8727 },
       // ... more route points
-      { "lat": 19.0176, "lng": 72.8562 }
+      { "lat": 19.0176, "lng": 72.8562, "address": "Lower Parel, Mumbai" }       // END LOCATION
     ],
     
     // Detailed Score Breakdown (from your Apex calculation)
@@ -117,7 +107,76 @@ This document specifies the exact JSON structure that your Salesforce API should
 }
 ```
 
-## Penalties & Bonuses Array Format
+## 🎯 **Key Changes Made:**
+
+### ❌ **REMOVED:**
+- `startLocation` object (no longer needed)
+- `endLocation` object (no longer needed)
+
+### ✅ **UPDATED:**
+- `route` array now includes address information for first and last points
+- Frontend will automatically extract:
+  - **Start Location:** `route[0]` (first element)
+  - **End Location:** `route[route.length - 1]` (last element)
+
+## Route Array Structure
+
+### **Minimum Required Format:**
+```json
+"route": [
+  { "lat": 19.0760, "lng": 72.8777 },  // START (required)
+  { "lat": 19.0750, "lng": 72.8767 },  // Intermediate points
+  { "lat": 19.0740, "lng": 72.8757 },
+  // ... more points
+  { "lat": 19.0176, "lng": 72.8562 }   // END (required)
+]
+```
+
+### **Enhanced Format with Addresses (Optional):**
+```json
+"route": [
+  { 
+    "lat": 19.0760, 
+    "lng": 72.8777, 
+    "address": "Bandra West, Mumbai"     // Optional for start point
+  },
+  { "lat": 19.0750, "lng": 72.8767 },   // Intermediate points don't need address
+  { "lat": 19.0740, "lng": 72.8757 },
+  // ... more points
+  { 
+    "lat": 19.0176, 
+    "lng": 72.8562, 
+    "address": "Lower Parel, Mumbai"     // Optional for end point
+  }
+]
+```
+
+## Frontend Implementation
+
+The frontend will automatically handle location extraction:
+
+```typescript
+// Frontend code - automatically extracts locations from route
+const tripData = response.tripData;
+
+if (tripData.route && tripData.route.length >= 2) {
+  const startLocation = {
+    lat: tripData.route[0].lat,
+    lng: tripData.route[0].lng,
+    name: tripData.route[0].address || 'Start Point'
+  };
+  
+  const endLocation = {
+    lat: tripData.route[tripData.route.length - 1].lat,
+    lng: tripData.route[tripData.route.length - 1].lng,
+    name: tripData.route[tripData.route.length - 1].address || 'End Point'
+  };
+  
+  // Use startLocation and endLocation for map display
+}
+```
+
+## Penalties & Bonuses Array Format (Unchanged)
 
 ### Penalties Structure:
 ```json
@@ -147,102 +206,6 @@ This document specifies the exact JSON structure that your Salesforce API should
 }
 ```
 
-## Example Apex Implementation for Penalties/Bonuses
-
-```apex
-public class TripScoreCalculator {
-    
-    public static Map<String, Object> calculatePenaltiesAndBonuses(TripData trip, VehicleSettings vehicle) {
-        List<String> penaltyDescriptions = new List<String>();
-        List<Integer> penaltyPoints = new List<Integer>();
-        List<String> bonusDescriptions = new List<String>();
-        List<Integer> bonusPoints = new List<Integer>();
-        
-        // Calculate penalties
-        if (trip.harshAcceleration > 0) {
-            penaltyDescriptions.add('Harsh Acceleration');
-            penaltyPoints.add(trip.harshAcceleration * 5);
-        }
-        
-        if (trip.harshBraking > 0) {
-            penaltyDescriptions.add('Harsh Braking');
-            penaltyPoints.add(trip.harshBraking * 5);
-        }
-        
-        if (trip.overSpeeding > 60) { // More than 1 minute
-            penaltyDescriptions.add('Speed Violations');
-            penaltyPoints.add(15);
-        }
-        
-        if (trip.idling > 300) { // More than 5 minutes
-            penaltyDescriptions.add('Excessive Idling');
-            penaltyPoints.add(10);
-        }
-        
-        // Calculate CO2 emissions penalty
-        Decimal co2Emitted = trip.fuelUsed * 2.31; // kg CO2 per liter
-        Decimal co2Threshold = trip.distance * 0.12; // 120g per km threshold
-        if (co2Emitted > co2Threshold) {
-            penaltyDescriptions.add('High CO₂ emission');
-            penaltyPoints.add(10);
-        }
-        
-        // Calculate bonuses
-        Decimal actualEfficiency = trip.distance / trip.fuelUsed;
-        if (actualEfficiency > vehicle.averageMileage * 1.1) { // 10% better than claimed
-            bonusDescriptions.add('Fuel efficiency above average');
-            bonusPoints.add(20);
-        }
-        
-        if (co2Emitted <= co2Threshold * 0.9) { // 10% below threshold
-            bonusDescriptions.add('Low CO₂ emissions');
-            bonusPoints.add(20);
-        }
-        
-        if (trip.harshAcceleration + trip.harshBraking == 0) {
-            bonusDescriptions.add('Smooth driving');
-            bonusPoints.add(15);
-        }
-        
-        if (trip.overSpeeding == 0) {
-            bonusDescriptions.add('Speed compliance');
-            bonusPoints.add(10);
-        }
-        
-        // Return in the required format
-        Map<String, Object> result = new Map<String, Object>();
-        result.put('penalties', new Map<String, Object>{
-            'descriptions' => penaltyDescriptions,
-            'points' => penaltyPoints
-        });
-        result.put('bonuses', new Map<String, Object>{
-            'descriptions' => bonusDescriptions,
-            'points' => bonusPoints
-        });
-        
-        return result;
-    }
-}
-```
-
-## Frontend Usage
-
-The frontend will display penalties and bonuses like this:
-
-```typescript
-// Display penalties
-tripData.penalties.descriptions.forEach((description, index) => {
-  const points = tripData.penalties.points[index];
-  console.log(`Penalty: ${description} (-${points} points)`);
-});
-
-// Display bonuses
-tripData.bonuses.descriptions.forEach((description, index) => {
-  const points = tripData.bonuses.points[index];
-  console.log(`Bonus: ${description} (+${points} points)`);
-});
-```
-
 ## Required vs Optional Fields
 
 ### ✅ **Required Fields** (Must be present):
@@ -262,16 +225,16 @@ tripData.bonuses.descriptions.forEach((description, index) => {
 - `overSpeeding` - Seconds spent speeding
 - `idling` - Seconds spent idling
 - `overRevving` - Seconds spent over-revving
+- `route` - Array of GPS coordinates (minimum 2 points: start and end)
 
 ### 🔧 **Optional Fields** (Can be omitted if not available):
-- `startLocation` / `endLocation` - GPS coordinates and addresses
-- `route` - Array of GPS coordinates for route visualization
 - `scoreBreakdown` - Detailed component scores
 - `penalties` / `bonuses` - Score calculation details in array format
 - `insights` - AI-generated driving tips
 - `weatherCondition` / `timeOfDay` / `roadType` / `trafficCondition` - Context data
 - `detailedData` - OBD-II sensor readings over time
 - `environmentalImpact` - Environmental calculations
+- `address` fields in route points - GPS coordinates are sufficient
 
 ## API Endpoint
 
@@ -307,4 +270,12 @@ If trip is not found or there's an error:
 }
 ```
 
-This structure provides all the data needed for a comprehensive trip detail view with the penalties and bonuses in your preferred array format! 🚗📊
+## 🚀 **Benefits of This Approach:**
+
+1. **Simplified API:** No need to send duplicate location data
+2. **Consistent Route Data:** All location information comes from one source
+3. **Flexible:** Can include addresses in route points or just coordinates
+4. **Efficient:** Reduces JSON payload size
+5. **Automatic:** Frontend handles location extraction seamlessly
+
+This structure provides all the data needed for comprehensive trip details while using the route array as the single source of truth for location information! 🗺️📍
