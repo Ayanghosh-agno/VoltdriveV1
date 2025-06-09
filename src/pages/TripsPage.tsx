@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, Filter, MapPin, Clock, Fuel, TrendingUp } from 'lucide-react';
+import { Calendar, Filter, MapPin, Clock, Fuel, TrendingUp, WifiOff, RefreshCw } from 'lucide-react';
 import TripCard from '../components/TripCard';
 import FilterModal from '../components/FilterModal';
 import DateRangeModal, { DateRange } from '../components/DateRangeModal';
+import { useSalesforceData } from '../hooks/useSalesforceData';
 
 const TripsPage: React.FC = () => {
+  const { salesforceData, loading, error, refreshData } = useSalesforceData();
   const [showFilters, setShowFilters] = useState(false);
   const [showDateRange, setShowDateRange] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -14,98 +16,57 @@ const TripsPage: React.FC = () => {
     preset: 'all'
   });
 
-  const allTrips = [
-    {
-      id: 1,
-      tripId: 'trip_001',
-      tripNumber: 'Trip - 0001',
-      date: '2024-01-15',
-      startTime: '08:30 AM',
-      endTime: '09:15 AM',
-      distance: 20.1,
-      duration: 45,
-      fuelUsed: 1.3,
-      avgSpeed: 45,
-      maxSpeed: 105,
-      score: 92,
-      events: { hardBraking: 0, rapidAccel: 1, speeding: 0 }
-    },
-    {
-      id: 2,
-      tripId: 'trip_002',
-      tripNumber: 'Trip - 0002',
-      date: '2024-01-15',
-      startTime: '06:00 PM',
-      endTime: '06:35 PM',
-      distance: 13.2,
-      duration: 35,
-      fuelUsed: 0.8,
-      avgSpeed: 35,
-      maxSpeed: 72,
-      score: 88,
-      events: { hardBraking: 1, rapidAccel: 0, speeding: 0 }
-    },
-    {
-      id: 3,
-      tripId: 'trip_003',
-      tripNumber: 'Trip - 0003',
-      date: '2024-01-14',
-      startTime: '07:45 AM',
-      endTime: '08:30 AM',
-      distance: 20.1,
-      duration: 45,
-      fuelUsed: 1.5,
-      avgSpeed: 50,
-      maxSpeed: 112,
-      score: 85,
-      events: { hardBraking: 2, rapidAccel: 1, speeding: 1 }
-    },
-    {
-      id: 4,
-      tripId: 'trip_004',
-      tripNumber: 'Trip - 0004',
-      date: '2024-01-13',
-      startTime: '02:15 PM',
-      endTime: '03:45 PM',
-      distance: 30.1,
-      duration: 90,
-      fuelUsed: 1.9,
-      avgSpeed: 40,
-      maxSpeed: 88,
-      score: 94,
-      events: { hardBraking: 0, rapidAccel: 0, speeding: 0 }
-    },
-    {
-      id: 5,
-      tripId: 'trip_005',
-      tripNumber: 'Trip - 0005',
-      date: '2024-01-12',
-      startTime: '09:00 AM',
-      endTime: '09:30 AM',
-      distance: 15.5,
-      duration: 30,
-      fuelUsed: 1.0,
-      avgSpeed: 52,
-      maxSpeed: 95,
-      score: 89,
-      events: { hardBraking: 1, rapidAccel: 0, speeding: 0 }
-    },
-    {
-      id: 6,
-      tripId: 'trip_006',
-      tripNumber: 'Trip - 0006',
-      date: '2024-01-11',
-      startTime: '05:30 PM',
-      endTime: '06:15 PM',
-      distance: 22.3,
-      duration: 45,
-      fuelUsed: 1.4,
-      avgSpeed: 42,
-      maxSpeed: 85,
-      score: 91,
-      events: { hardBraking: 0, rapidAccel: 1, speeding: 0 }
-    }
-  ];
+  // Calculate score for display (temporary until Salesforce provides calculatedScore)
+  const calculateDisplayScore = (trip: any) => {
+    if (trip.calculatedScore) return trip.calculatedScore;
+    
+    let score = 100;
+    
+    // Penalty for harsh events
+    const harshEvents = (trip.harshAcceleration || 0) + (trip.harshBraking || 0);
+    score -= harshEvents * 5;
+    
+    // Penalty for speeding
+    if (trip.overSpeeding > 60) score -= 15;
+    else if (trip.overSpeeding > 30) score -= 10;
+    else if (trip.overSpeeding > 0) score -= 5;
+    
+    // Penalty for excessive idling
+    const idlingMinutes = (trip.idling || 0) / 60;
+    if (idlingMinutes > 5) score -= 10;
+    else if (idlingMinutes > 3) score -= 5;
+    
+    return Math.max(60, Math.min(100, Math.round(score)));
+  };
+
+  // Convert Salesforce trip data to component format
+  const convertTripsData = (salesforceTrips: any[]) => {
+    return salesforceTrips.map((trip, index) => ({
+      id: index + 1,
+      tripId: trip.tripId,
+      tripNumber: trip.tripName,
+      date: trip.date,
+      startTime: trip.startTime,
+      endTime: trip.endTime,
+      distance: trip.distance,
+      duration: trip.duration,
+      fuelUsed: trip.fuelUsed,
+      avgSpeed: trip.avgSpeed,
+      maxSpeed: trip.maxSpeed,
+      score: calculateDisplayScore(trip),
+      events: { 
+        hardBraking: trip.harshBraking || 0, 
+        rapidAccel: trip.harshAcceleration || 0, 
+        speeding: trip.overSpeeding > 0 ? 1 : 0 
+      }
+    }));
+  };
+
+  // Get all trips from Salesforce data
+  const allTrips = useMemo(() => {
+    if (!salesforceData?.recentTrips) return [];
+    return convertTripsData(salesforceData.recentTrips);
+  }, [salesforceData]);
 
   const filterOptions = [
     { value: 'all', label: 'All Trips' },
@@ -149,7 +110,7 @@ const TripsPage: React.FC = () => {
     }
 
     return filtered;
-  }, [selectedFilter, dateRange]);
+  }, [allTrips, selectedFilter, dateRange]);
 
   const totalDistance = filteredTrips.reduce((sum, trip) => sum + trip.distance, 0);
   const totalFuel = filteredTrips.reduce((sum, trip) => sum + trip.fuelUsed, 0);
@@ -180,6 +141,63 @@ const TripsPage: React.FC = () => {
     const option = filterOptions.find(opt => opt.value === selectedFilter);
     return option ? option.label : 'Filter';
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-6 pb-20 md:pb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">All Trips</h1>
+            <div className="h-4 bg-gray-200 rounded w-64 mt-2 animate-pulse"></div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="h-24 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6 pb-20 md:pb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">All Trips</h1>
+            <p className="text-gray-600 mt-1">Track and analyze your driving patterns</p>
+          </div>
+        </div>
+        
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <WifiOff className="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Trips</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={refreshData}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Try Again</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
@@ -296,7 +314,7 @@ const TripsPage: React.FC = () => {
       <div className="space-y-4">
         {filteredTrips.length > 0 ? (
           filteredTrips.map((trip) => (
-            <TripCard key={trip.id} trip={trip} />
+            <TripCard key={trip.tripId} trip={trip} />
           ))
         ) : (
           <div className="text-center py-12">
@@ -305,7 +323,10 @@ const TripsPage: React.FC = () => {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No trips found</h3>
             <p className="text-gray-600">
-              Try adjusting your filters or date range to see more trips.
+              {allTrips.length === 0 
+                ? 'Start driving to see your trip history!'
+                : 'Try adjusting your filters or date range to see more trips.'
+              }
             </p>
           </div>
         )}
