@@ -14,13 +14,14 @@ interface AIAdviceProps {
     fuelUsed: number;
     distance: number;
     avgSpeed: number;
+    mileage?: string; // Added mileage support
   };
 }
 
 const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
   const generateAdvice = () => {
     const advice = [];
-    const fuelEfficiency = (tripData.distance / tripData.fuelUsed).toFixed(1);
+    const fuelEfficiency = tripData.mileage ? parseFloat(tripData.mileage) : (tripData.distance / tripData.fuelUsed);
     
     // Score-based advice
     if (tripData.score >= 90) {
@@ -85,13 +86,13 @@ const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
 
     // Fuel efficiency advice
     const avgFuelEfficiency = 15; // km/l baseline
-    const currentEfficiency = parseFloat(fuelEfficiency);
+    const currentEfficiency = typeof fuelEfficiency === 'number' ? fuelEfficiency : parseFloat(fuelEfficiency.toString());
     if (currentEfficiency < avgFuelEfficiency) {
       advice.push({
         type: 'tip',
         icon: Lightbulb,
         title: 'Improve Fuel Efficiency',
-        description: `Your fuel efficiency of ${fuelEfficiency} km/l is below average. Maintain steady speeds, avoid rapid acceleration, and ensure your tires are properly inflated to improve efficiency.`,
+        description: `Your fuel efficiency of ${currentEfficiency.toFixed(1)} km/l is below average. Maintain steady speeds, avoid rapid acceleration, and ensure your tires are properly inflated to improve efficiency.`,
         color: 'text-emerald-600 bg-emerald-50 border-emerald-200'
       });
     } else {
@@ -99,7 +100,7 @@ const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
         type: 'success',
         icon: CheckCircle,
         title: 'Great Fuel Efficiency!',
-        description: `Your fuel efficiency of ${fuelEfficiency} km/l is excellent. Your smooth driving style is saving you money and reducing environmental impact.`,
+        description: `Your fuel efficiency of ${currentEfficiency.toFixed(1)} km/l is excellent. Your smooth driving style is saving you money and reducing environmental impact.`,
         color: 'text-green-600 bg-green-50 border-green-200'
       });
     }
@@ -136,30 +137,6 @@ const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
             </div>
           );
         })}
-      </div>
-
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <h4 className="font-semibold text-gray-900 mb-2">Quick Stats Summary</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <span className="text-gray-600">Fuel Efficiency:</span>
-            <div className="font-semibold">{(tripData.distance / tripData.fuelUsed).toFixed(1)} km/l</div>
-          </div>
-          <div>
-            <span className="text-gray-600">Safety Events:</span>
-            <div className="font-semibold">{tripData.events.harshAcceleration + tripData.events.harshBraking}</div>
-          </div>
-          <div>
-            <span className="text-gray-600">Eco Score:</span>
-            <div className="font-semibold">{Math.min(100, Math.round(tripData.score + (tripData.distance / tripData.fuelUsed) * 2))}</div>
-          </div>
-          <div>
-            <span className="text-gray-600">Overall Grade:</span>
-            <div className="font-semibold">
-              {tripData.score >= 90 ? 'A' : tripData.score >= 80 ? 'B' : tripData.score >= 70 ? 'C' : 'D'}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, Fuel, Gauge, AlertTriangle, TrendingUp, Zap, TreePine, Activity, WifiOff, RefreshCw } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Fuel, Gauge, AlertTriangle, TrendingUp, Zap, TreePine, Activity, WifiOff, RefreshCw, Route } from 'lucide-react';
 import TripMap from '../components/TripMap';
 import AnalyticsChart from '../components/AnalyticsChart';
 import AIAdvice from '../components/AIAdvice';
@@ -85,6 +85,10 @@ const TripDetailPage: React.FC = () => {
       avgSpeed: salesforceTripData.avgSpeed, // km/hr
       maxSpeed: salesforceTripData.maxSpeed, // km/hr
       score: salesforceTripData.calculatedScore || calculateTempScore(salesforceTripData),
+      // Calculate trip mileage (fuel efficiency)
+      mileage: salesforceTripData.fuelUsed > 0 ? 
+               (salesforceTripData.distance / salesforceTripData.fuelUsed).toFixed(1) : 
+               '0.0',
       events: {
         harshAcceleration: salesforceTripData.harshAcceleration || 0,
         harshBraking: salesforceTripData.harshBraking || 0,
@@ -187,7 +191,7 @@ const TripDetailPage: React.FC = () => {
     return (
       <div className="space-y-6 pb-20 md:pb-8">
         <div className="flex items-center space-x-4">
-          <Link to="/trips\" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link to="/trips" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Link>
           <div className="flex-1">
@@ -298,8 +302,8 @@ const TripDetailPage: React.FC = () => {
       {/* Score Breakdown - Now calculated in frontend */}
       <ScoreBreakdown tripData={tripScoreInput} />
 
-      {/* Trip Overview Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+      {/* Trip Overview Cards - Now includes Mileage */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center space-x-2 mb-2">
             <MapPin className="h-4 w-4 text-blue-500" />
@@ -322,6 +326,14 @@ const TripDetailPage: React.FC = () => {
             <span className="text-xs font-medium text-gray-600">Fuel Used</span>
           </div>
           <div className="text-xl font-bold text-gray-900">{tripData.fuelUsed} L</div>
+        </div>
+        
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center space-x-2 mb-2">
+            <Route className="h-4 w-4 text-orange-500" />
+            <span className="text-xs font-medium text-gray-600">Mileage</span>
+          </div>
+          <div className="text-xl font-bold text-gray-900">{tripData.mileage} km/L</div>
         </div>
         
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -472,28 +484,7 @@ const TripDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Salesforce Insights */}
-      {tripData.insights && tripData.insights.length > 0 && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Driving Insights</h3>
-          <div className="space-y-3">
-            {tripData.insights.map((insight: any, index: number) => (
-              <div 
-                key={index}
-                className={`p-4 rounded-lg border ${
-                  insight.type === 'positive' ? 'bg-green-50 border-green-200 text-green-800' :
-                  insight.type === 'warning' ? 'bg-red-50 border-red-200 text-red-800' :
-                  'bg-blue-50 border-blue-200 text-blue-800'
-                }`}
-              >
-                <p className="text-sm">{insight.message}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* AI Advice */}
+      {/* AI Driving Insights - ONLY section for insights */}
       <AIAdvice tripData={tripData} />
     </div>
   );
