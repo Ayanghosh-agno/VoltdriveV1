@@ -88,12 +88,52 @@ This document specifies the exact JSON structure that your Salesforce API should
     "roadType": "city",          // city, highway, residential, rural
     "trafficCondition": "moderate", // light, moderate, heavy
     
-    // Optional: Detailed OBD-II Data for Advanced Analytics
+    // Optional: Detailed OBD-II Data for Advanced Analytics WITH TIME DATA
     "detailedData": {
-      "speedProfile": [42, 38, 45, 52, 48, 41, 39, 44, 50, 46, 43, 47, 49, 45, 42, 40, 44, 48, 51, 47, 43, 41, 46, 49, 45, 42, 38, 44, 50, 47, 43, 41, 45, 48, 46, 44, 42, 47, 49, 45, 43, 41, 44, 48, 46, 42, 40, 45, 47, 44],
-      "rpmProfile": [1800, 1650, 2100, 2400, 2200, 1900, 1750, 2000, 2300, 2100, 1950, 2150, 2250, 2050, 1900, 1800, 2000, 2200, 2350, 2150, 1950, 1850, 2100, 2250, 2050, 1900, 1700, 2000, 2300, 2150, 1950, 1850, 2050, 2200, 2100, 2000, 1900, 2150, 2250, 2050, 1950, 1850, 2000, 2200, 2100, 1900, 1800, 2050, 2150, 2000],
-      "throttleProfile": [25, 20, 35, 45, 40, 28, 22, 30, 42, 38, 32, 36, 40, 35, 28, 25, 30, 40, 45, 36, 32, 26, 38, 42, 35, 28, 20, 30, 42, 36, 32, 26, 35, 40, 38, 30, 28, 36, 42, 35, 32, 26, 30, 40, 38, 28, 25, 35, 36, 30],
-      "engineLoadProfile": [45, 38, 52, 62, 58, 48, 42, 50, 60, 56, 50, 54, 58, 52, 48, 45, 50, 58, 62, 54, 50, 46, 56, 60, 52, 48, 40, 50, 60, 54, 50, 46, 52, 58, 56, 50, 48, 54, 60, 52, 50, 46, 50, 58, 56, 48, 45, 52, 54, 50]
+      "dataInterval": 5,  // seconds between each reading
+      "startTimestamp": "2024-01-15T08:30:00Z", // ISO timestamp when trip started
+      
+      // Time-based readings (each array has same length)
+      "timeData": [
+        {
+          "timeOffset": 0,      // seconds from trip start
+          "timestamp": "2024-01-15T08:30:00Z",
+          "speed": 42,          // km/hr
+          "rpm": 1800,          // RPM
+          "throttle": 25,       // %
+          "engineLoad": 45      // %
+        },
+        {
+          "timeOffset": 5,      // 5 seconds later
+          "timestamp": "2024-01-15T08:30:05Z",
+          "speed": 38,
+          "rpm": 1650,
+          "throttle": 20,
+          "engineLoad": 38
+        },
+        {
+          "timeOffset": 10,     // 10 seconds later
+          "timestamp": "2024-01-15T08:30:10Z",
+          "speed": 45,
+          "rpm": 2100,
+          "throttle": 35,
+          "engineLoad": 52
+        }
+        // ... continue for entire trip duration
+      ],
+      
+      // Alternative: Separate arrays with explicit timestamps (if you prefer this format)
+      "timestamps": [
+        "2024-01-15T08:30:00Z",
+        "2024-01-15T08:30:05Z", 
+        "2024-01-15T08:30:10Z",
+        "2024-01-15T08:30:15Z"
+        // ... one timestamp per data point
+      ],
+      "speedProfile": [42, 38, 45, 52],
+      "rpmProfile": [1800, 1650, 2100, 2400],
+      "throttleProfile": [25, 20, 35, 45],
+      "engineLoadProfile": [45, 38, 52, 62]
     },
     
     // Calculated Environmental Impact
@@ -107,175 +147,83 @@ This document specifies the exact JSON structure that your Salesforce API should
 }
 ```
 
-## 🎯 **Key Changes Made:**
+## 🎯 **Two Options for Time Data:**
 
-### ❌ **REMOVED:**
-- `startLocation` object (no longer needed)
-- `endLocation` object (no longer needed)
-
-### ✅ **UPDATED:**
-- `route` array now includes address information for first and last points
-- Frontend will automatically extract:
-  - **Start Location:** `route[0]` (first element)
-  - **End Location:** `route[route.length - 1]` (last element)
-
-## Route Array Structure
-
-### **Minimum Required Format:**
+### **Option 1: Combined Time Data Objects (Recommended)**
 ```json
-"route": [
-  { "lat": 19.0760, "lng": 72.8777 },  // START (required)
-  { "lat": 19.0750, "lng": 72.8767 },  // Intermediate points
-  { "lat": 19.0740, "lng": 72.8757 },
-  // ... more points
-  { "lat": 19.0176, "lng": 72.8562 }   // END (required)
-]
+"detailedData": {
+  "dataInterval": 5,  // seconds between readings
+  "startTimestamp": "2024-01-15T08:30:00Z",
+  "timeData": [
+    {
+      "timeOffset": 0,
+      "timestamp": "2024-01-15T08:30:00Z",
+      "speed": 42,
+      "rpm": 1800,
+      "throttle": 25,
+      "engineLoad": 45
+    }
+    // ... more data points
+  ]
+}
 ```
 
-### **Enhanced Format with Addresses (Optional):**
+### **Option 2: Separate Arrays with Timestamps**
 ```json
-"route": [
-  { 
-    "lat": 19.0760, 
-    "lng": 72.8777, 
-    "address": "Bandra West, Mumbai"     // Optional for start point
-  },
-  { "lat": 19.0750, "lng": 72.8767 },   // Intermediate points don't need address
-  { "lat": 19.0740, "lng": 72.8757 },
-  // ... more points
-  { 
-    "lat": 19.0176, 
-    "lng": 72.8562, 
-    "address": "Lower Parel, Mumbai"     // Optional for end point
-  }
-]
+"detailedData": {
+  "timestamps": ["2024-01-15T08:30:00Z", "2024-01-15T08:30:05Z", ...],
+  "speedProfile": [42, 38, 45, 52, ...],
+  "rpmProfile": [1800, 1650, 2100, 2400, ...],
+  "throttleProfile": [25, 20, 35, 45, ...],
+  "engineLoadProfile": [45, 38, 52, 62, ...]
+}
 ```
 
-## Frontend Implementation
+## 📊 **Benefits of Including Time Data:**
 
-The frontend will automatically handle location extraction:
+1. **Precise Time Axis**: Charts show exact timestamps instead of calculated intervals
+2. **Variable Intervals**: Support for non-uniform data collection intervals
+3. **Better Synchronization**: All sensor readings are perfectly aligned in time
+4. **Event Correlation**: Can correlate driving events with specific timestamps
+5. **Replay Capability**: Can replay the trip with exact timing
+
+## 🔧 **Frontend Usage:**
+
+The frontend will automatically detect which format you're using:
 
 ```typescript
-// Frontend code - automatically extracts locations from route
-const tripData = response.tripData;
+// Option 1: Combined time data
+if (tripData.detailedData?.timeData) {
+  const chartData = tripData.detailedData.timeData.map(point => ({
+    time: new Date(point.timestamp).toLocaleTimeString(),
+    speed: point.speed,
+    rpm: point.rpm,
+    // ... other values
+  }));
+}
 
-if (tripData.route && tripData.route.length >= 2) {
-  const startLocation = {
-    lat: tripData.route[0].lat,
-    lng: tripData.route[0].lng,
-    name: tripData.route[0].address || 'Start Point'
-  };
-  
-  const endLocation = {
-    lat: tripData.route[tripData.route.length - 1].lat,
-    lng: tripData.route[tripData.route.length - 1].lng,
-    name: tripData.route[tripData.route.length - 1].address || 'End Point'
-  };
-  
-  // Use startLocation and endLocation for map display
+// Option 2: Separate arrays with timestamps
+else if (tripData.detailedData?.timestamps) {
+  const chartData = tripData.detailedData.timestamps.map((timestamp, index) => ({
+    time: new Date(timestamp).toLocaleTimeString(),
+    speed: tripData.detailedData.speedProfile[index],
+    rpm: tripData.detailedData.rpmProfile[index],
+    // ... other values
+  }));
+}
+
+// Fallback: Calculate time from trip duration (current method)
+else {
+  // Current implementation remains as fallback
 }
 ```
 
-## Penalties & Bonuses Array Format (Unchanged)
+## 🚀 **Recommendation:**
 
-### Penalties Structure:
-```json
-"penalties": {
-  "descriptions": [
-    "Harsh Acceleration",
-    "High CO₂ emission", 
-    "Excessive Idling",
-    "Speed Violations",
-    "Harsh Braking"
-  ],
-  "points": [10, 10, 5, 15, 8]
-}
-```
+Use **Option 1 (Combined Time Data Objects)** as it's:
+- More structured and easier to maintain
+- Ensures all data points are perfectly synchronized
+- Allows for variable data collection intervals
+- Easier to extend with additional sensor data
 
-### Bonuses Structure:
-```json
-"bonuses": {
-  "descriptions": [
-    "Fuel efficiency above average",
-    "Low CO₂ emissions",
-    "Smooth driving",
-    "Consistent speed",
-    "No harsh events"
-  ],
-  "points": [20, 20, 15, 10, 5]
-}
-```
-
-## Required vs Optional Fields
-
-### ✅ **Required Fields** (Must be present):
-- `tripId` - Unique identifier for the trip
-- `tripName` - Display name for the trip
-- `date` - Trip date in YYYY-MM-DD format
-- `startTime` - Start time in HH:MM format
-- `endTime` - End time in HH:MM format
-- `distance` - Trip distance in kilometers
-- `duration` - Trip duration in minutes
-- `fuelUsed` - Fuel consumed in liters
-- `avgSpeed` - Average speed in km/hr
-- `maxSpeed` - Maximum speed reached in km/hr
-- `calculatedScore` - Overall driving score (0-100)
-- `harshAcceleration` - Count of harsh acceleration events
-- `harshBraking` - Count of harsh braking events
-- `overSpeeding` - Seconds spent speeding
-- `idling` - Seconds spent idling
-- `overRevving` - Seconds spent over-revving
-- `route` - Array of GPS coordinates (minimum 2 points: start and end)
-
-### 🔧 **Optional Fields** (Can be omitted if not available):
-- `scoreBreakdown` - Detailed component scores
-- `penalties` / `bonuses` - Score calculation details in array format
-- `insights` - AI-generated driving tips
-- `weatherCondition` / `timeOfDay` / `roadType` / `trafficCondition` - Context data
-- `detailedData` - OBD-II sensor readings over time
-- `environmentalImpact` - Environmental calculations
-- `address` fields in route points - GPS coordinates are sufficient
-
-## API Endpoint
-
-**Endpoint:** `GET /services/apexrest/voltride/tripDetails/{tripId}`
-
-**Example Request:**
-```
-GET /services/apexrest/voltride/tripDetails/trip_001
-Authorization: Bearer {access_token}
-```
-
-**Example Response:**
-```json
-{
-  "success": true,
-  "tripData": {
-    // ... complete trip data as shown above
-  },
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
-
-## Error Response Format
-
-If trip is not found or there's an error:
-
-```json
-{
-  "success": false,
-  "error": "Trip not found",
-  "errorCode": "TRIP_NOT_FOUND",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
-
-## 🚀 **Benefits of This Approach:**
-
-1. **Simplified API:** No need to send duplicate location data
-2. **Consistent Route Data:** All location information comes from one source
-3. **Flexible:** Can include addresses in route points or just coordinates
-4. **Efficient:** Reduces JSON payload size
-5. **Automatic:** Frontend handles location extraction seamlessly
-
-This structure provides all the data needed for comprehensive trip details while using the route array as the single source of truth for location information! 🗺️📍
+The frontend will automatically handle whichever format you choose to implement! 🎯

@@ -3,11 +3,18 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface AnalyticsChartProps {
   title: string;
-  data: number[];
+  data: number[] | TimeDataPoint[];
   color: string;
   unit: string;
   yAxisDomain?: [number, number];
-  tripDuration: number; // minutes - to calculate time intervals
+  tripDuration?: number; // minutes - for fallback calculation
+  timestamps?: string[]; // optional timestamps array
+}
+
+interface TimeDataPoint {
+  timeOffset: number;
+  timestamp: string;
+  value: number;
 }
 
 const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ 
@@ -16,36 +23,80 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
   color, 
   unit, 
   yAxisDomain,
-  tripDuration 
+  tripDuration,
+  timestamps
 }) => {
-  // Convert data array to time-based chart data
+  // Convert data to chart format with intelligent time handling
   const chartData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
     
-    // Calculate time interval between readings
-    const timeIntervalSeconds = (tripDuration * 60) / data.length;
-    
-    return data.map((value, index) => {
-      const timeInSeconds = index * timeIntervalSeconds;
-      const minutes = Math.floor(timeInSeconds / 60);
-      const seconds = Math.floor(timeInSeconds % 60);
-      
-      return {
-        time: `${minutes}:${seconds.toString().padStart(2, '0')}`,
-        timeInSeconds: timeInSeconds,
-        value: Math.round(value * 10) / 10, // Round to 1 decimal place
+    // Option 1: Data is already time-based objects
+    if (typeof data[0] === 'object' && 'timestamp' in data[0]) {
+      const timeData = data as TimeDataPoint[];
+      return timeData.map((point, index) => ({
+        time: new Date(point.timestamp).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }),
+        timeInSeconds: point.timeOffset,
+        value: Math.round(point.value * 10) / 10,
         index: index
-      };
-    });
-  }, [data, tripDuration]);
+      }));
+    }
+    
+    // Option 2: Separate timestamps array provided
+    if (timestamps && timestamps.length === data.length) {
+      return (data as number[]).map((value, index) => ({
+        time: new Date(timestamps[index]).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }),
+        timeInSeconds: index * 5, // Assume 5-second intervals as fallback
+        value: Math.round(value * 10) / 10,
+        index: index
+      }));
+    }
+    
+    // Option 3: Fallback - calculate time from trip duration (current method)
+    if (tripDuration) {
+      const timeIntervalSeconds = (tripDuration * 60) / data.length;
+      
+      return (data as number[]).map((value, index) => {
+        const timeInSeconds = index * timeIntervalSeconds;
+        const minutes = Math.floor(timeInSeconds / 60);
+        const seconds = Math.floor(timeInSeconds % 60);
+        
+        return {
+          time: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+          timeInSeconds: timeInSeconds,
+          value: Math.round(value * 10) / 10,
+          index: index
+        };
+      });
+    }
+    
+    // Final fallback - just use index
+    return (data as number[]).map((value, index) => ({
+      time: `${index}`,
+      timeInSeconds: index,
+      value: Math.round(value * 10) / 10,
+      index: index
+    }));
+  }, [data, tripDuration, timestamps]);
 
   // Calculate statistics
   const stats = React.useMemo(() => {
     if (!data || data.length === 0) return null;
     
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const avg = data.reduce((sum, val) => sum + val, 0) / data.length;
+    const values = Array.isArray(data) && typeof data[0] === 'object' 
+      ? (data as TimeDataPoint[]).map(d => d.value)
+      : data as number[];
+    
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
     
     return {
       min: Math.round(min * 10) / 10,
@@ -148,7 +199,11 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
       {/* Data points info */}
       <div className="mt-3 flex justify-between items-center text-xs text-gray-500">
         <span>{data.length} data points</span>
-        <span>Duration: {Math.floor(tripDuration)} minutes</span>
+        <span>
+          {timestamps ? 'Real timestamps' : 
+           tripDuration ? `Duration: ${Math.floor(tripDuration)} minutes` : 
+           'Calculated intervals'}
+        </span>
       </div>
     </div>
   );
