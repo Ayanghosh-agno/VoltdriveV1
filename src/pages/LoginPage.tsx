@@ -114,8 +114,25 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 relative">
-      {/* Bolt.new Attribution - Fixed position */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* Desktop Bolt.new Attribution - 90px x 90px */}
+      <div className="hidden md:block fixed bottom-6 right-6 z-50">
+        <a
+          href="https://bolt.new"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <img 
+            src="/black_circle_360x360.png" 
+            alt="Bolt.new" 
+            className="rounded-full hover:scale-110 transition-transform duration-200 shadow-lg"
+            style={{ width: '90px', height: '90px', minWidth: '90px', minHeight: '90px' }}
+          />
+        </a>
+      </div>
+
+      {/* Mobile Bolt.new Attribution - 60px x 60px */}
+      <div className="md:hidden fixed bottom-6 right-6 z-50">
         <a
           href="https://bolt.new"
           target="_blank"
@@ -252,14 +269,14 @@ const LoginPage: React.FC = () => {
                       disabled={loading}
                     />
                     <span className="ml-2 text-sm text-gray-600">Remember me</span>
-                  </label> 
-                  {/* <button
+                  </label>
+                  <button
                     type="button"
                     className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
                     disabled={loading}
                   >
                     Forgot password?
-                  </button> */}
+                  </button>
                 </div>
 
                 {/* Submit Button */}
@@ -277,7 +294,7 @@ const LoginPage: React.FC = () => {
                     <span>Sign In</span>
                   )}
                 </button>
-              </form> 
+              </form>
 
               {/* Additional Options */}
               <div className="mt-8 text-center">
@@ -287,7 +304,7 @@ const LoginPage: React.FC = () => {
                     Contact Support
                   </button>
                 </p>
-              </div> 
+              </div>
             </div>
           </div>
         </div>
