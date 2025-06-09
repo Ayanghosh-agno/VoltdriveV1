@@ -43,12 +43,13 @@ export class SalesforceDataProcessor {
   
   /**
    * Create UserBaselines from settings page data
+   * USES FUEL COST FROM SETTINGS ONLY
    */
   private static createUserBaselinesFromSettings(settings: AppSettings): UserBaselines {
     return {
       averageFuelEfficiency: parseFloat(settings.vehicle.averageMileage) || 15.0,
       targetFuelEfficiency: parseFloat(settings.vehicle.averageMileage) || 15.0, // Use same as average
-      fuelCostPerLiter: settings.vehicle.fuelType === 'Petrol' ? 102 : 89, // ₹ per liter
+      fuelCostPerLiter: parseFloat(settings.vehicle.fuelCost) || 102.0, // USE SETTINGS FUEL COST
       vehicleType: settings.vehicle.fuelType.toLowerCase() as 'petrol' | 'diesel' | 'electric',
       speedThreshold: parseFloat(settings.vehicle.speedThreshold) || 80,
       harshAccelThreshold: parseFloat(settings.vehicle.harshAccelThreshold) || 3.5,
@@ -181,13 +182,14 @@ export class SalesforceDataProcessor {
   
   /**
    * Calculate quick stats with period-over-period changes
+   * USES FUEL COST FROM SETTINGS ONLY
    */
   private static calculateQuickStats(
     currentWeek: WeeklyTripInsight, 
     previousWeek: WeeklyTripInsight, 
     userBaselines: UserBaselines
   ) {
-    // Calculate fuel savings in ₹ with proper validation
+    // Calculate fuel savings in ₹ with proper validation using SETTINGS fuel cost
     let currentFuelSaved = 0;
     let previousFuelSaved = 0;
     
@@ -201,8 +203,8 @@ export class SalesforceDataProcessor {
       previousFuelSaved = Math.max(0, previousExpectedFuel - previousWeek.totalFuelUsed);
     }
     
-    const moneySaved = currentFuelSaved * userBaselines.fuelCostPerLiter;
-    const previousMoneySaved = previousFuelSaved * userBaselines.fuelCostPerLiter;
+    const moneySaved = currentFuelSaved * userBaselines.fuelCostPerLiter; // USE SETTINGS FUEL COST
+    const previousMoneySaved = previousFuelSaved * userBaselines.fuelCostPerLiter; // USE SETTINGS FUEL COST
     
     return {
       totalDistance: {
@@ -251,6 +253,7 @@ export class SalesforceDataProcessor {
   
   /**
    * Generate insights based on current vs previous week data
+   * INCLUDES COST CALCULATIONS USING SETTINGS FUEL COST
    */
   private static generateInsights(
     currentWeek: WeeklyTripInsight,
@@ -342,18 +345,20 @@ export class SalesforceDataProcessor {
       });
     }
     
-    // Idling comparison
+    // Idling comparison with cost calculation using settings
     const avgIdlingCurrent = currentWeek.totalTrips > 0 ? 
       currentWeek.totalIdling / currentWeek.totalTrips / 60 : 0; // minutes per trip
     const avgIdlingPrevious = previousWeek.totalTrips > 0 ? 
       previousWeek.totalIdling / previousWeek.totalTrips / 60 : 0;
     
     if (avgIdlingCurrent > 3 && avgIdlingPrevious > 0 && avgIdlingCurrent > avgIdlingPrevious * 1.2) {
+      const idlingCostPerHour = userBaselines.fuelCostPerLiter * 0.8; // Approximate idling fuel consumption
+      const avgIdlingCost = (avgIdlingCurrent / 60) * idlingCostPerHour;
       insights.push({
         type: 'tip',
         icon: 'clock',
         title: 'Reduce idling time',
-        description: `Average idling increased to ${Math.round(avgIdlingCurrent)} minutes per trip. Turn off engine when stopped for more than 30 seconds.`,
+        description: `Average idling increased to ${Math.round(avgIdlingCurrent)} minutes per trip. Turn off engine when stopped for more than 30 seconds. This could save you ₹${Math.round(avgIdlingCost)} per trip.`,
         color: 'blue'
       });
     }

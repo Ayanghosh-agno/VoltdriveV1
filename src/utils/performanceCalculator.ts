@@ -29,7 +29,7 @@ export interface RawTripData {
 export interface UserBaselines {
   averageFuelEfficiency: number; // km/l - from user's vehicle settings
   targetFuelEfficiency: number; // km/l - industry standard (15 km/l)
-  fuelCostPerLiter: number; // ₹ per liter
+  fuelCostPerLiter: number; // ₹ per liter - FROM SETTINGS ONLY
   vehicleType: 'petrol' | 'diesel' | 'electric';
   
   // Thresholds from vehicle settings
@@ -48,7 +48,7 @@ export interface CalculatedMetrics {
   totalDistance: { value: number; change: string };
   avgSpeed: { value: number; change: string };
   hardBrakingEvents: { value: number; change: string };
-  fuelSaved: { value: number; change: string }; // in ₹
+  fuelSaved: { value: number; change: string }; // in ₹ - CALCULATED FROM SETTINGS
   
   // Insights
   insights: Insight[];
@@ -215,6 +215,7 @@ export class PerformanceCalculator {
   
   /**
    * Calculate quick stats with period-over-period changes
+   * USES FUEL COST FROM SETTINGS ONLY
    */
   private static calculateQuickStats(
     currentTrips: RawTripData[], 
@@ -239,14 +240,14 @@ export class PerformanceCalculator {
       ? previousTrips.reduce((sum, trip) => sum + trip.avgSpeed, 0) / previousTrips.length 
       : 0;
     
-    // Calculate fuel savings in ₹ based on vehicle's claimed efficiency
+    // Calculate fuel savings in ₹ using SETTINGS fuel cost
     const expectedFuel = currentDistance / baselines.averageFuelEfficiency;
     const fuelSaved = Math.max(0, expectedFuel - currentFuel);
-    const moneySaved = fuelSaved * baselines.fuelCostPerLiter;
+    const moneySaved = fuelSaved * baselines.fuelCostPerLiter; // USE SETTINGS FUEL COST
     
     const previousExpectedFuel = previousDistance / baselines.averageFuelEfficiency;
     const previousFuelSaved = Math.max(0, previousExpectedFuel - previousFuel);
-    const previousMoneySaved = previousFuelSaved * baselines.fuelCostPerLiter;
+    const previousMoneySaved = previousFuelSaved * baselines.fuelCostPerLiter; // USE SETTINGS FUEL COST
     
     return {
       totalDistance: {
@@ -347,13 +348,15 @@ export class PerformanceCalculator {
       });
     }
     
-    // Idling insight
+    // Idling insight with cost calculation using settings
     if (avgIdlingTime > 3) {
+      const idlingCostPerHour = baselines.fuelCostPerLiter * 0.8; // Approximate idling fuel consumption
+      const avgIdlingCost = (avgIdlingTime / 60) * idlingCostPerHour;
       insights.push({
         type: 'tip',
         icon: 'clock',
         title: 'Reduce idling time',
-        description: `Average idling time is ${Math.round(avgIdlingTime)} minutes. Turn off engine when stopped for more than 30 seconds.`,
+        description: `Average idling time is ${Math.round(avgIdlingTime)} minutes. Turn off engine when stopped for more than 30 seconds. This could save you ₹${Math.round(avgIdlingCost)} per trip.`,
         color: 'blue'
       });
     }
