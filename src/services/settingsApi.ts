@@ -17,7 +17,7 @@ class SettingsApiService {
   }
 
   /**
-   * Save ALL settings to Salesforce (with automatic fallback)
+   * Save ALL settings to Salesforce
    */
   async saveSettings(settings: AppSettings): Promise<ApiResponse> {
     try {
@@ -54,13 +54,11 @@ class SettingsApiService {
         throw new Error(data.message || 'Salesforce save failed');
       }
     } catch (error) {
-      console.log('⚠️ Salesforce unavailable, using local storage:', error);
+      console.log('⚠️ Salesforce unavailable:', error);
       
-      // Always succeed with localStorage as fallback
       return {
-        success: true,
-        data: settings,
-        message: 'Settings saved locally'
+        success: false,
+        error: 'Unable to save to cloud. Please try again later.'
       };
     }
   }
@@ -113,7 +111,7 @@ class SettingsApiService {
   }
 
   /**
-   * Load ALL settings from Salesforce (with automatic fallback)
+   * Load ALL settings from Salesforce
    */
   async loadSettings(): Promise<ApiResponse<AppSettings>> {
     try {
@@ -139,7 +137,7 @@ class SettingsApiService {
         return this.loadFromLocalStorage();
       }
     } catch (error) {
-      console.log('⚠️ Salesforce unavailable, using local storage:', error);
+      console.log('⚠️ Salesforce unavailable:', error);
       return this.loadFromLocalStorage();
     }
   }
@@ -221,7 +219,7 @@ class SettingsApiService {
   }
 
   /**
-   * Export user data from Salesforce (with fallback)
+   * Export user data from Salesforce
    */
   async exportUserData(): Promise<ApiResponse<Blob>> {
     try {
@@ -247,29 +245,17 @@ class SettingsApiService {
         throw new Error(`Export failed: ${response.status}`);
       }
     } catch (error) {
-      console.log('⚠️ Salesforce export unavailable, exporting local data:', error);
-      
-      // Fallback: export local data
-      const localSettings = this.getCurrentSettings();
-      const exportData = {
-        settings: localSettings,
-        exportDate: new Date().toISOString(),
-        source: 'local_storage',
-        note: 'Exported from local storage'
-      };
-      
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      console.log('⚠️ Salesforce export unavailable:', error);
       
       return {
-        success: true,
-        data: blob,
-        message: 'Local data exported'
+        success: false,
+        error: 'Unable to export data. Please try again later.'
       };
     }
   }
 
   /**
-   * Delete user account from Salesforce (with fallback)
+   * Delete user account from Salesforce
    */
   async deleteAccount(): Promise<ApiResponse> {
     try {
@@ -295,15 +281,11 @@ class SettingsApiService {
         throw new Error(`Account deletion failed: ${response.status}`);
       }
     } catch (error) {
-      console.log('⚠️ Salesforce deletion unavailable, clearing local data:', error);
-      
-      // Clear local data as fallback
-      localStorage.removeItem('voltride_settings');
-      this.authService.logout();
+      console.log('⚠️ Salesforce deletion unavailable:', error);
       
       return {
-        success: true,
-        message: 'Local account data cleared'
+        success: false,
+        error: 'Unable to delete account. Please try again later.'
       };
     }
   }
@@ -311,12 +293,12 @@ class SettingsApiService {
   /**
    * Check if Salesforce integration is working
    */
-  async checkConnection(): Promise<{ connected: boolean; mode: 'production' | 'local' }> {
+  async checkConnection(): Promise<{ connected: boolean; mode: 'production' | 'error' }> {
     try {
       const configStatus = this.authService.getConfigStatus();
       
       if (!configStatus.configured) {
-        return { connected: false, mode: 'local' };
+        return { connected: false, mode: 'error' };
       }
 
       // Try a simple API call to test connection
@@ -327,10 +309,10 @@ class SettingsApiService {
       const connected = response.ok;
       return { 
         connected, 
-        mode: connected ? 'production' : 'local' 
+        mode: connected ? 'production' : 'error' 
       };
     } catch (error) {
-      return { connected: false, mode: 'local' };
+      return { connected: false, mode: 'error' };
     }
   }
 }

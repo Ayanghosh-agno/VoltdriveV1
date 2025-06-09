@@ -52,5 +52,5 @@ export interface ApiResponse<T = any> {
 
 export interface ConnectionStatus {
   connected: boolean;
-  mode: 'production' | 'local';
+  mode: 'production' | 'error';
 }

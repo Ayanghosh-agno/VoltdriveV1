@@ -25,14 +25,14 @@ exports.handler = async (event, context) => {
     const clientSecret = process.env.VITE_SALESFORCE_CLIENT_SECRET || process.env.SALESFORCE_CLIENT_SECRET;
     
     if (!clientId || !clientSecret) {
-      console.log('Salesforce credentials not configured, returning local storage response');
+      console.log('Salesforce credentials not configured');
       return {
-        statusCode: 200,
+        statusCode: 500,
         headers,
         body: JSON.stringify({
           success: false,
           error: 'Salesforce not configured',
-          message: 'Using local storage - configure Salesforce environment variables for production'
+          message: 'Salesforce environment variables not configured'
         }),
       };
     }
@@ -75,14 +75,12 @@ exports.handler = async (event, context) => {
   } catch (error) {
     console.error('Salesforce auth function error:', error);
     
-    // Return local storage response on error
     return {
-      statusCode: 200,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: 'Salesforce connection failed',
-        message: 'Using local storage due to connection error',
+        error: 'Unable to connect to Salesforce. Please try again later.',
         details: error.message
       }),
     };

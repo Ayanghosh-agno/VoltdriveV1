@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Car, Smartphone, HelpCircle, LogOut, Edit3, Save, X, Download, Trash2, Cloud, CloudOff } from 'lucide-react';
+import { User, Bell, Shield, Car, Smartphone, HelpCircle, LogOut, Edit3, Save, X, Download, Trash2, Cloud, CloudOff, WifiOff } from 'lucide-react';
 import SettingSection from '../components/SettingSection';
 import ToggleSwitch from '../components/ToggleSwitch';
 import EditProfileModal from '../components/EditProfileModal';
@@ -425,18 +425,18 @@ const SettingsPage: React.FC = () => {
           <div className={`flex items-center justify-between p-4 rounded-lg border ${
             connectionStatus.connected 
               ? 'bg-green-50 border-green-200' 
-              : 'bg-gray-50 border-gray-200'
+              : 'bg-red-50 border-red-200'
           }`}>
             <div className="flex items-center space-x-3">
               <div className={`w-3 h-3 rounded-full ${
-                connectionStatus.connected ? 'bg-green-500' : 'bg-gray-400'
+                connectionStatus.connected ? 'bg-green-500' : 'bg-red-500'
               }`}></div>
               <div>
                 <h4 className="font-medium text-gray-900">VoltRide Module</h4>
                 <p className="text-sm text-gray-600">
                   {connectionStatus.connected 
                     ? 'Connected to cloud - OBD-II & GPS Integrated'
-                    : 'Not connected to cloud - OBD-II & GPS Integrated'
+                    : 'Connection issues - OBD-II & GPS Integrated'
                   }
                 </p>
               </div>
@@ -445,7 +445,7 @@ const SettingsPage: React.FC = () => {
               {connectionStatus.connected ? (
                 <Cloud className="h-5 w-5 text-green-600" />
               ) : (
-                <CloudOff className="h-5 w-5 text-gray-500" />
+                <WifiOff className="h-5 w-5 text-red-500" />
               )}
             </div>
           </div>

@@ -26,44 +26,9 @@ exports.handler = async (event, context) => {
         statusCode: 401,
         headers,
         body: JSON.stringify({
+          success: false,
           error: 'No authorization header provided'
         }),
-      };
-    }
-
-    // Check if this is a local token
-    if (event.headers.authorization.includes('local_token_')) {
-      console.log('Local token detected, returning mock response');
-      
-      // Return appropriate mock responses based on the endpoint
-      const pathParts = event.path.split('/salesforce-api');
-      const salesforcePath = pathParts[1] || '';
-      
-      let mockResponse = {
-        success: true,
-        message: 'Local storage response',
-        timestamp: new Date().toISOString()
-      };
-
-      if (salesforcePath.includes('/settings')) {
-        if (event.httpMethod === 'GET') {
-          mockResponse = {
-            success: true,
-            settings: null,
-            message: 'No settings found in local storage'
-          };
-        } else {
-          mockResponse = {
-            success: true,
-            message: 'Settings saved in local storage'
-          };
-        }
-      }
-
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(mockResponse),
       };
     }
     
@@ -111,14 +76,12 @@ exports.handler = async (event, context) => {
   } catch (error) {
     console.error('Salesforce API function error:', error);
     
-    // Return local storage response on error
     return {
-      statusCode: 200,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: 'Salesforce API connection failed',
-        message: 'Using local storage due to API connection error',
+        error: 'Unable to connect to Salesforce. Please try again later.',
         details: error.message
       }),
     };

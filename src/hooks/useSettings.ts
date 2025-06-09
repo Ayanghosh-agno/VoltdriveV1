@@ -44,7 +44,7 @@ export const useSettings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
-  const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; mode: 'production' | 'local' }>({ connected: false, mode: 'local' });
+  const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; mode: 'production' | 'error' }>({ connected: false, mode: 'error' });
 
   const apiService = SettingsApiService.getInstance();
 
@@ -59,7 +59,7 @@ export const useSettings = () => {
       setConnectionStatus(status);
       console.log(`🔗 Connection status: ${status.mode} mode, connected: ${status.connected}`);
     } catch (error) {
-      setConnectionStatus({ connected: false, mode: 'local' });
+      setConnectionStatus({ connected: false, mode: 'error' });
     }
   };
 
@@ -79,7 +79,7 @@ export const useSettings = () => {
         setSettings(JSON.parse(localSettings));
       }
 
-      // Try to load from Salesforce (automatic, no user intervention needed)
+      // Try to load from Salesforce
       const response = await apiService.loadSettings();
       
       if (response.success && response.data) {
@@ -111,7 +111,7 @@ export const useSettings = () => {
       setSettings(updatedSettings);
       localStorage.setItem('voltride_settings', JSON.stringify(updatedSettings));
 
-      // Try to save to Salesforce (automatic)
+      // Try to save to Salesforce
       const response = await apiService.saveSettings(updatedSettings);
       
       if (response.success) {

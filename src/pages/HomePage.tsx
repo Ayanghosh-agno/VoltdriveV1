@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, Fuel, Clock, Shield, AlertTriangle, Award, RefreshCw } from 'lucide-react';
+import { TrendingUp, Fuel, Clock, Shield, AlertTriangle, Award, RefreshCw, WifiOff } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import ProgressRing from '../components/ProgressRing';
 import RecentTrips from '../components/RecentTrips';
@@ -57,15 +57,15 @@ const HomePage: React.FC = () => {
     return (
       <div className="space-y-8 pb-20 md:pb-8">
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-          <AlertTriangle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Data</h3>
+          <WifiOff className="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Connection Issue</h3>
           <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={refreshData}
             className="inline-flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
-            <span>Retry</span>
+            <span>Try Again</span>
           </button>
         </div>
       </div>
@@ -80,6 +80,13 @@ const HomePage: React.FC = () => {
           <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-blue-800 mb-2">No Data Available</h3>
           <p className="text-blue-600 mb-4">Start driving to see your performance metrics!</p>
+          <button
+            onClick={refreshData}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Check Again</span>
+          </button>
         </div>
       </div>
     );

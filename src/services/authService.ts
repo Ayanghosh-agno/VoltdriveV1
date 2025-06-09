@@ -50,7 +50,7 @@ class AuthService {
 
     // Check if Salesforce is configured
     if (!this.isConfigured()) {
-      console.log('🔧 Salesforce not configured, using local storage');
+      console.log('🔧 Salesforce not configured');
       console.log('📋 Environment check:', {
         hasClientId: !!this.CLIENT_ID,
         hasClientSecret: !!this.CLIENT_SECRET,
@@ -59,7 +59,7 @@ class AuthService {
         hasSecurityToken: !!this.SECURITY_TOKEN,
         hasInstanceUrl: !!this.INSTANCE_URL
       });
-      return this.generateLocalToken();
+      throw new Error('Salesforce configuration missing. Please check environment variables.');
     }
 
     // Try to authenticate with Salesforce
@@ -69,12 +69,11 @@ class AuthService {
         return this.accessToken;
       }
     } catch (error) {
-      console.log('⚠️ Salesforce authentication failed, using local storage:', error);
-      return this.generateLocalToken();
+      console.log('⚠️ Salesforce authentication failed:', error);
+      throw new Error('Unable to connect to Salesforce. Please try again later.');
     }
 
-    // Fallback to local storage
-    return this.generateLocalToken();
+    throw new Error('Authentication failed. Please try again later.');
   }
 
   /**
@@ -132,17 +131,6 @@ class AuthService {
   }
 
   /**
-   * Generate local token for local storage mode when Salesforce is unavailable
-   */
-  private generateLocalToken(): string {
-    console.log('💾 Using local storage - Salesforce integration unavailable');
-    this.accessToken = 'local_token_' + Date.now();
-    this.tokenExpiry = Date.now() + (2 * 60 * 60 * 1000); // 2 hours from now
-    this.instanceUrl = this.INSTANCE_URL || 'https://localhost';
-    return this.accessToken;
-  }
-
-  /**
    * Check if the current token is still valid
    */
   private isTokenValid(): boolean {
@@ -186,29 +174,24 @@ class AuthService {
    * Make authenticated API calls to Salesforce
    */
   async makeAuthenticatedRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    const token = await this.getAccessToken();
-    const instanceUrl = this.getInstanceUrl();
-
-    // Check if we're in local storage mode
-    if (token.startsWith('local_token_')) {
-      return this.makeLocalRequest(endpoint, options);
-    }
-
-    // Always use Netlify function proxy for API calls
-    const baseUrl = this.getApiBaseUrl();
-    const fullUrl = `${baseUrl}/salesforce-api${endpoint}`;
-
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'X-Salesforce-Instance': instanceUrl,
-      ...options.headers,
-    };
-
-    console.log(`🌐 Making Salesforce API request: ${fullUrl}`);
-
     try {
+      const token = await this.getAccessToken();
+      const instanceUrl = this.getInstanceUrl();
+
+      // Always use Netlify function proxy for API calls
+      const baseUrl = this.getApiBaseUrl();
+      const fullUrl = `${baseUrl}/salesforce-api${endpoint}`;
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Salesforce-Instance': instanceUrl,
+        ...options.headers,
+      };
+
+      console.log(`🌐 Making Salesforce API request: ${fullUrl}`);
+
       const response = await fetch(fullUrl, {
         ...options,
         headers,
@@ -219,65 +202,16 @@ class AuthService {
         this.clearTokens();
         const newToken = await this.getAccessToken();
         
-        if (!newToken.startsWith('local_token_')) {
-          // Retry with new token
-          const retryHeaders = { ...headers, 'Authorization': `Bearer ${newToken}` };
-          return fetch(fullUrl, { ...options, headers: retryHeaders });
-        }
+        // Retry with new token
+        const retryHeaders = { ...headers, 'Authorization': `Bearer ${newToken}` };
+        return fetch(fullUrl, { ...options, headers: retryHeaders });
       }
 
       return response;
     } catch (error) {
-      console.log('⚠️ Salesforce API request failed, falling back to local storage:', error);
-      return this.makeLocalRequest(endpoint, options);
+      console.log('⚠️ Salesforce API request failed:', error);
+      throw new Error('Unable to connect to Salesforce. Please try again later.');
     }
-  }
-
-  /**
-   * Make local API requests when Salesforce is unavailable
-   */
-  private async makeLocalRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    console.log('💾 Local storage API request:', endpoint);
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
-
-    let mockData: any = {
-      success: true,
-      message: 'Data saved locally',
-      timestamp: new Date().toISOString()
-    };
-
-    if (endpoint.includes('/settings') && options.method === 'GET') {
-      // Return stored settings from localStorage
-      const storedSettings = localStorage.getItem('voltride_settings');
-      if (storedSettings) {
-        try {
-          const settings = JSON.parse(storedSettings);
-          mockData = {
-            success: true,
-            settings: settings,
-            message: 'Settings loaded from local storage'
-          };
-        } catch (error) {
-          console.error('Error parsing stored settings:', error);
-        }
-      } else {
-        mockData = {
-          success: true,
-          settings: null,
-          message: 'No settings found'
-        };
-      }
-    }
-
-    return new Response(JSON.stringify(mockData), {
-      status: 200,
-      statusText: 'OK',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
   }
 
   /**
@@ -309,11 +243,11 @@ class AuthService {
   /**
    * Get configuration status for debugging
    */
-  getConfigStatus(): { configured: boolean; mode: 'production' | 'local' } {
+  getConfigStatus(): { configured: boolean; mode: 'production' | 'error' } {
     const configured = this.isConfigured();
     return {
       configured,
-      mode: configured ? 'production' : 'local'
+      mode: configured ? 'production' : 'error'
     };
   }
 

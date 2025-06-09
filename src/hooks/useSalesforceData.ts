@@ -35,23 +35,14 @@ export const useSalesforceData = () => {
       const data = await response.json();
       console.log('✅ Trip insights received from Salesforce:', data);
       
-      // Check if this is a local storage response
+      // Check if this is an error response
       if (data.success === false) {
-        console.log('🔄 Local storage mode detected, using example data...');
-        const fallbackData = exampleSalesforceResponse;
-        setSalesforceData(fallbackData);
-        
-        // Process with settings-derived userBaselines
-        const metrics = SalesforceDataProcessor.processHomePageData(fallbackData, settings);
-        setPerformanceMetrics(metrics);
-        
-        setError('Using local data - Salesforce integration not available');
-        return;
+        throw new Error(data.error || 'Failed to fetch data from Salesforce');
       }
       
       // Validate the data structure
       if (!data.currentWeekTripInsight || !data.previousWeekTripInsight || !data.recentTrips) {
-        console.warn('⚠️ Invalid data structure, using example data');
+        console.warn('⚠️ Invalid data structure received from Salesforce');
         throw new Error('Invalid data structure received from Salesforce');
       }
       
@@ -66,16 +57,8 @@ export const useSalesforceData = () => {
     } catch (err) {
       console.error('❌ Error fetching Salesforce data:', err);
       
-      // Fallback to example data for development
-      console.log('🔄 Using example data as fallback...');
-      const fallbackData = exampleSalesforceResponse;
-      setSalesforceData(fallbackData);
-      
-      // Process with settings-derived userBaselines
-      const metrics = SalesforceDataProcessor.processHomePageData(fallbackData, settings);
-      setPerformanceMetrics(metrics);
-      
-      setError(`Connection failed: ${err instanceof Error ? err.message : 'Unknown error'}. Using local data.`);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`We're experiencing some issues connecting to our servers. Please try again in a few moments.`);
     } finally {
       setLoading(false);
     }
