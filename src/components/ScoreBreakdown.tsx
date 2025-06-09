@@ -5,7 +5,23 @@ import { useSettings } from '../hooks/useSettings';
 import { Link } from 'react-router-dom';
 
 interface ScoreBreakdownProps {
-  tripData: TripScoreInput;
+  tripData: TripScoreInput & {
+    // Add server data for penalties and bonuses
+    penalties?: {
+      descriptions: string[];
+      points: number[];
+    };
+    bonuses?: {
+      descriptions: string[];
+      points: number[];
+    };
+    scoreBreakdown?: {
+      safety: number;
+      efficiency: number;
+      smoothness: number;
+      environmental: number;
+    };
+  };
   className?: string;
 }
 
@@ -19,8 +35,9 @@ const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ tripData, className = '
     fuelType: settings.vehicle.fuelType as 'Petrol' | 'Diesel' | 'Electric'
   };
   
-  // Calculate score breakdown in frontend
-  const scoreData = FrontendScoreCalculator.calculateScoreBreakdown(tripData, vehicleBaselines);
+  // Use server score breakdown if available, otherwise calculate in frontend
+  const scoreData = tripData.scoreBreakdown || 
+    FrontendScoreCalculator.calculateScoreBreakdown(tripData, vehicleBaselines);
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-green-600 bg-green-50 border-green-200';
@@ -69,10 +86,10 @@ const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ tripData, className = '
     <div className={`bg-white rounded-xl p-6 shadow-sm border border-gray-100 ${className}`}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">Score Breakdown</h3>
-        <div className={`px-4 py-2 rounded-lg border ${getScoreColor(scoreData.overall)}`}>
+        <div className={`px-4 py-2 rounded-lg border ${getScoreColor(scoreData.overall || tripData.calculatedScore || 0)}`}>
           <div className="flex items-center space-x-2">
-            <span className="text-2xl font-bold">{scoreData.overall}</span>
-            <span className="text-lg font-semibold">{getScoreGrade(scoreData.overall)}</span>
+            <span className="text-2xl font-bold">{scoreData.overall || tripData.calculatedScore || 0}</span>
+            <span className="text-lg font-semibold">{getScoreGrade(scoreData.overall || tripData.calculatedScore || 0)}</span>
           </div>
         </div>
       </div>
@@ -110,31 +127,66 @@ const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ tripData, className = '
         })}
       </div>
 
-      {/* Detailed breakdown */}
+      {/* Detailed Analysis - Use Server Data */}
       <div className="border-t border-gray-200 pt-4">
         <h4 className="font-medium text-gray-900 mb-3">Detailed Analysis</h4>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Speeding Penalty:</span>
-            <span className="font-medium text-red-600">-{scoreData.breakdown.speedingPenalty} pts</span>
+        
+        {/* Show Server Penalties if available */}
+        {tripData.penalties && tripData.penalties.descriptions.length > 0 && (
+          <div className="mb-4">
+            <h5 className="text-sm font-medium text-red-600 mb-2">Penalties Applied</h5>
+            <div className="space-y-1 text-sm">
+              {tripData.penalties.descriptions.map((description, index) => (
+                <div key={index} className="flex justify-between text-red-600">
+                  <span>{description}:</span>
+                  <span className="font-medium">-{tripData.penalties!.points[index]} pts</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Harsh Events Penalty:</span>
-            <span className="font-medium text-red-600">-{scoreData.breakdown.harshEventsPenalty} pts</span>
+        )}
+
+        {/* Show Server Bonuses if available */}
+        {tripData.bonuses && tripData.bonuses.descriptions.length > 0 && (
+          <div className="mb-4">
+            <h5 className="text-sm font-medium text-green-600 mb-2">Bonuses Applied</h5>
+            <div className="space-y-1 text-sm">
+              {tripData.bonuses.descriptions.map((description, index) => (
+                <div key={index} className="flex justify-between text-green-600">
+                  <span>{description}:</span>
+                  <span className="font-medium">+{tripData.bonuses!.points[index]} pts</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Idling Penalty:</span>
-            <span className="font-medium text-red-600">-{scoreData.breakdown.idlingPenalty} pts</span>
+        )}
+
+        {/* Fallback: Show calculated breakdown if no server data */}
+        {(!tripData.penalties || tripData.penalties.descriptions.length === 0) && 
+         (!tripData.bonuses || tripData.bonuses.descriptions.length === 0) && (
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Speeding Penalty:</span>
+              <span className="font-medium text-red-600">-{scoreData.breakdown?.speedingPenalty || 0} pts</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Harsh Events Penalty:</span>
+              <span className="font-medium text-red-600">-{scoreData.breakdown?.harshEventsPenalty || 0} pts</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Idling Penalty:</span>
+              <span className="font-medium text-red-600">-{scoreData.breakdown?.idlingPenalty || 0} pts</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Fuel Efficiency:</span>
+              <span className="font-medium text-green-600">{scoreData.breakdown?.fuelEfficiencyScore || 0} pts</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Speed Consistency:</span>
+              <span className="font-medium text-blue-600">{scoreData.breakdown?.speedConsistencyScore || 0} pts</span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Fuel Efficiency:</span>
-            <span className="font-medium text-green-600">{scoreData.breakdown.fuelEfficiencyScore} pts</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Speed Consistency:</span>
-            <span className="font-medium text-blue-600">{scoreData.breakdown.speedConsistencyScore} pts</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Updated Calculation Baseline Info */}
