@@ -15,7 +15,6 @@ export interface SalesforceHomePageData {
   metadata: {
     dataFetchedAt: string; // ISO timestamp
     userId: string;
-    totalTripsInDatabase: number;
     oldestTripDate: string;
     newestTripDate: string;
   };
@@ -34,8 +33,6 @@ export interface WeeklyTripInsight {
   
   // Calculated averages
   avgSpeed: number; // km/hr
-  avgTripDistance: number; // km
-  avgTripDuration: number; // minutes
   
   // Driving events (sum of all trips in period)
   totalHarshAcceleration: number;
@@ -46,22 +43,9 @@ export interface WeeklyTripInsight {
   
   // Speed statistics
   maxSpeedRecorded: number; // km/hr
-  avgMaxSpeed: number; // average of max speeds across trips
-  
-  // Fuel efficiency
-  actualFuelEfficiency: number; // km/l (calculated: totalDistance / totalFuelUsed)
-  
-  // Time-based insights
-  mostActiveTimeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
-  weekdayTrips: number;
-  weekendTrips: number;
   
   // Environmental data
   estimatedCO2Emissions: number; // kg
-  
-  // Route insights (if available)
-  mostFrequentRouteType: 'highway' | 'city' | 'residential' | 'mixed';
-  avgTrafficCondition: 'light' | 'moderate' | 'heavy';
 }
 
 export interface RecentTripData {
@@ -80,7 +64,6 @@ export interface RecentTripData {
   // Speed data
   avgSpeed: number; // km/hr
   maxSpeed: number; // km/hr
-  speedProfile?: number[]; // Optional: speed readings every 30 seconds
   
   // Driving events
   harshAcceleration: number; // count
@@ -88,32 +71,6 @@ export interface RecentTripData {
   overSpeeding: number; // seconds
   idling: number; // seconds
   overRevving: number; // seconds
-  
-  // OBD-II data (optional for detailed analysis)
-  rpmProfile?: number[]; // RPM readings
-  throttleProfile?: number[]; // Throttle position %
-  engineLoadProfile?: number[]; // Engine load %
-  
-  // Route information
-  startLocation?: {
-    latitude: number;
-    longitude: number;
-    address: string;
-  };
-  endLocation?: {
-    latitude: number;
-    longitude: number;
-    address: string;
-  };
-  
-  // Environmental context
-  weatherCondition?: 'clear' | 'rain' | 'snow' | 'fog';
-  timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
-  roadType: 'highway' | 'city' | 'residential' | 'mixed';
-  trafficCondition: 'light' | 'moderate' | 'heavy';
-  
-  // Pre-calculated score (optional - we can calculate on frontend too)
-  calculatedScore?: number;
 }
 
 export interface UserBaselines {
@@ -137,25 +94,16 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
     endDate: "2024-01-14",
     totalTrips: 8,
     totalDistance: 156.4,
-    totalDuration: 420, // 7 hours
+    totalDuration: 420,
     totalFuelUsed: 10.2,
     avgSpeed: 44.5,
-    avgTripDistance: 19.6,
-    avgTripDuration: 52.5,
     totalHarshAcceleration: 5,
     totalHarshBraking: 3,
-    totalOverSpeeding: 180, // 3 minutes total
-    totalIdling: 1200, // 20 minutes total
+    totalOverSpeeding: 180,
+    totalIdling: 1200,
     totalOverRevving: 45,
-    maxSpeedRecorded: 112,
-    avgMaxSpeed: 95.2,
-    actualFuelEfficiency: 15.3, // km/l
-    mostActiveTimeOfDay: 'morning',
-    weekdayTrips: 6,
-    weekendTrips: 2,
-    estimatedCO2Emissions: 24.1,
-    mostFrequentRouteType: 'city',
-    avgTrafficCondition: 'moderate'
+    maxSpeedRecorded: 100,
+    estimatedCO2Emissions: 24.1
   },
   
   previousWeekTripInsight: {
@@ -166,22 +114,13 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
     totalDuration: 380,
     totalFuelUsed: 9.1,
     avgSpeed: 41.2,
-    avgTripDistance: 22.1,
-    avgTripDuration: 63.3,
     totalHarshAcceleration: 8,
     totalHarshBraking: 6,
     totalOverSpeeding: 240,
     totalIdling: 1500,
     totalOverRevving: 75,
     maxSpeedRecorded: 118,
-    avgMaxSpeed: 98.5,
-    actualFuelEfficiency: 14.6,
-    mostActiveTimeOfDay: 'evening',
-    weekdayTrips: 4,
-    weekendTrips: 2,
-    estimatedCO2Emissions: 21.5,
-    mostFrequentRouteType: 'mixed',
-    avgTrafficCondition: 'heavy'
+    estimatedCO2Emissions: 21.5
   },
   
   recentTrips: [
@@ -200,20 +139,7 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
       harshBraking: 1,
       overSpeeding: 45,
       idling: 180,
-      overRevving: 15,
-      timeOfDay: 'morning',
-      roadType: 'city',
-      trafficCondition: 'moderate',
-      startLocation: {
-        latitude: 19.0760,
-        longitude: 72.8777,
-        address: "Bandra West, Mumbai"
-      },
-      endLocation: {
-        latitude: 19.0176,
-        longitude: 72.8562,
-        address: "Lower Parel, Mumbai"
-      }
+      overRevving: 15
     },
     {
       tripId: "trip_002",
@@ -230,10 +156,7 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
       harshBraking: 1,
       overSpeeding: 0,
       idling: 120,
-      overRevving: 5,
-      timeOfDay: 'evening',
-      roadType: 'city',
-      trafficCondition: 'heavy'
+      overRevving: 5
     },
     {
       tripId: "trip_003",
@@ -250,17 +173,13 @@ export const exampleSalesforceResponse: SalesforceHomePageData = {
       harshBraking: 2,
       overSpeeding: 120,
       idling: 240,
-      overRevving: 30,
-      timeOfDay: 'morning',
-      roadType: 'highway',
-      trafficCondition: 'light'
+      overRevving: 30
     }
   ],
   
   metadata: {
     dataFetchedAt: "2024-01-15T10:30:00Z",
     userId: "user_12345",
-    totalTripsInDatabase: 156,
     oldestTripDate: "2023-06-15",
     newestTripDate: "2024-01-15"
   }
