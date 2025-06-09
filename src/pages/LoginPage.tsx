@@ -235,14 +235,14 @@ const LoginPage: React.FC = () => {
                       disabled={loading}
                     />
                     <span className="ml-2 text-sm text-gray-600">Remember me</span>
-                  </label>
-                  <button
+                  </label> 
+                  {/* <button
                     type="button"
                     className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
                     disabled={loading}
                   >
                     Forgot password?
-                  </button>
+                  </button> */}
                 </div>
 
                 {/* Submit Button */}
