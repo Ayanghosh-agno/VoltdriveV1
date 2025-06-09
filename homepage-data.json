@@ -1,0 +1,280 @@
+{
+  "currentWeekTripInsight": {
+    "startDate": "2024-01-08",
+    "endDate": "2024-01-14",
+    "totalTrips": 8,
+    "totalDistance": 156.4,
+    "totalDuration": 420,
+    "totalFuelUsed": 10.2,
+    "avgSpeed": 44.5,
+    "avgTripDistance": 19.6,
+    "avgTripDuration": 52.5,
+    "totalHarshAcceleration": 5,
+    "totalHarshBraking": 3,
+    "totalOverSpeeding": 180,
+    "totalIdling": 1200,
+    "totalOverRevving": 45,
+    "maxSpeedRecorded": 112,
+    "avgMaxSpeed": 95.2,
+    "actualFuelEfficiency": 15.3,
+    "mostActiveTimeOfDay": "morning",
+    "weekdayTrips": 6,
+    "weekendTrips": 2,
+    "estimatedCO2Emissions": 24.1,
+    "mostFrequentRouteType": "city",
+    "avgTrafficCondition": "moderate"
+  },
+  "previousWeekTripInsight": {
+    "startDate": "2024-01-01",
+    "endDate": "2024-01-07",
+    "totalTrips": 6,
+    "totalDistance": 132.8,
+    "totalDuration": 380,
+    "totalFuelUsed": 9.1,
+    "avgSpeed": 41.2,
+    "avgTripDistance": 22.1,
+    "avgTripDuration": 63.3,
+    "totalHarshAcceleration": 8,
+    "totalHarshBraking": 6,
+    "totalOverSpeeding": 240,
+    "totalIdling": 1500,
+    "totalOverRevving": 75,
+    "maxSpeedRecorded": 118,
+    "avgMaxSpeed": 98.5,
+    "actualFuelEfficiency": 14.6,
+    "mostActiveTimeOfDay": "evening",
+    "weekdayTrips": 4,
+    "weekendTrips": 2,
+    "estimatedCO2Emissions": 21.5,
+    "mostFrequentRouteType": "mixed",
+    "avgTrafficCondition": "heavy"
+  },
+  "recentTrips": [
+    {
+      "tripId": "trip_001",
+      "tripName": "Trip - 0001",
+      "date": "2024-01-15",
+      "startTime": "08:30",
+      "endTime": "09:15",
+      "distance": 20.1,
+      "duration": 45,
+      "fuelUsed": 1.3,
+      "avgSpeed": 45,
+      "maxSpeed": 105,
+      "harshAcceleration": 2,
+      "harshBraking": 1,
+      "overSpeeding": 45,
+      "idling": 180,
+      "overRevving": 15,
+      "timeOfDay": "morning",
+      "roadType": "city",
+      "trafficCondition": "moderate",
+      "startLocation": {
+        "latitude": 19.0760,
+        "longitude": 72.8777,
+        "address": "Bandra West, Mumbai"
+      },
+      "endLocation": {
+        "latitude": 19.0176,
+        "longitude": 72.8562,
+        "address": "Lower Parel, Mumbai"
+      },
+      "speedProfile": [42, 38, 45, 52, 48, 41, 39, 44, 50, 46, 43, 47, 49, 45, 42, 40, 44, 48, 51, 47, 43, 41, 46, 49, 45, 42, 38, 44, 50, 47, 43, 41, 45, 48, 46, 44, 42, 47, 49, 45, 43, 41, 44, 48, 46, 42, 40, 45, 47, 44],
+      "rpmProfile": [1800, 1650, 2100, 2400, 2200, 1900, 1750, 2000, 2300, 2100, 1950, 2150, 2250, 2050, 1900, 1800, 2000, 2200, 2350, 2150, 1950, 1850, 2100, 2250, 2050, 1900, 1700, 2000, 2300, 2150, 1950, 1850, 2050, 2200, 2100, 2000, 1900, 2150, 2250, 2050, 1950, 1850, 2000, 2200, 2100, 1900, 1800, 2050, 2150, 2000],
+      "calculatedScore": 92
+    },
+    {
+      "tripId": "trip_002",
+      "tripName": "Trip - 0002",
+      "date": "2024-01-14",
+      "startTime": "18:00",
+      "endTime": "18:35",
+      "distance": 13.2,
+      "duration": 35,
+      "fuelUsed": 0.8,
+      "avgSpeed": 35,
+      "maxSpeed": 72,
+      "harshAcceleration": 0,
+      "harshBraking": 1,
+      "overSpeeding": 0,
+      "idling": 120,
+      "overRevving": 5,
+      "timeOfDay": "evening",
+      "roadType": "city",
+      "trafficCondition": "heavy",
+      "startLocation": {
+        "latitude": 19.0176,
+        "longitude": 72.8562,
+        "address": "Lower Parel, Mumbai"
+      },
+      "endLocation": {
+        "latitude": 19.0760,
+        "longitude": 72.8777,
+        "address": "Bandra West, Mumbai"
+      },
+      "calculatedScore": 88
+    },
+    {
+      "tripId": "trip_003",
+      "tripName": "Trip - 0003",
+      "date": "2024-01-13",
+      "startTime": "07:45",
+      "endTime": "08:30",
+      "distance": 20.1,
+      "duration": 45,
+      "fuelUsed": 1.5,
+      "avgSpeed": 50,
+      "maxSpeed": 112,
+      "harshAcceleration": 3,
+      "harshBraking": 2,
+      "overSpeeding": 120,
+      "idling": 240,
+      "overRevving": 30,
+      "timeOfDay": "morning",
+      "roadType": "highway",
+      "trafficCondition": "light",
+      "startLocation": {
+        "latitude": 19.0760,
+        "longitude": 72.8777,
+        "address": "Bandra West, Mumbai"
+      },
+      "endLocation": {
+        "latitude": 18.9220,
+        "longitude": 72.8347,
+        "address": "Worli, Mumbai"
+      },
+      "calculatedScore": 85
+    }
+  ],
+  "userBaselines": {
+    "averageFuelEfficiency": 15.5,
+    "targetFuelEfficiency": 15.0,
+    "fuelCostPerLiter": 102,
+    "vehicleType": "petrol",
+    "speedThreshold": 80,
+    "harshAccelThreshold": 3.5,
+    "harshBrakeThreshold": 4.0,
+    "revThreshold": 3500,
+    "preferredDrivingStyle": "normal",
+    "safetyPriority": "high"
+  },
+  "metadata": {
+    "dataFetchedAt": "2024-01-15T10:30:00Z",
+    "userId": "user_12345",
+    "totalTripsInDatabase": 156,
+    "oldestTripDate": "2023-06-15",
+    "newestTripDate": "2024-01-15"
+  },
+  "calculatedMetrics": {
+    "drivingScore": 92,
+    "fuelEfficiency": 85,
+    "safetyRating": 88,
+    "totalDistance": {
+      "value": 156.4,
+      "change": "+18%"
+    },
+    "avgSpeed": {
+      "value": 45,
+      "change": "+8%"
+    },
+    "hardBrakingEvents": {
+      "value": 8,
+      "change": "-33%"
+    },
+    "fuelSaved": {
+      "value": 245,
+      "change": "+12%"
+    },
+    "insights": [
+      {
+        "type": "positive",
+        "icon": "trending-up",
+        "title": "Great fuel efficiency improvement!",
+        "description": "You improved fuel efficiency by 5% this week compared to last week.",
+        "color": "green"
+      },
+      {
+        "type": "positive",
+        "icon": "shield",
+        "title": "Smooth driving detected",
+        "description": "You reduced harsh driving events by 33% this week.",
+        "color": "blue"
+      },
+      {
+        "type": "tip",
+        "icon": "clock",
+        "title": "Optimize morning commute",
+        "description": "Most of your trips are during morning hours. Consider leaving 10 minutes earlier to avoid rush hour traffic.",
+        "color": "blue"
+      },
+      {
+        "type": "positive",
+        "icon": "gauge",
+        "title": "Excellent speed control",
+        "description": "You maintained consistent speeds with fewer harsh events.",
+        "color": "green"
+      }
+    ],
+    "scoreBreakdown": {
+      "safety": 88,
+      "efficiency": 85,
+      "smoothness": 92,
+      "environmental": 78
+    }
+  },
+  "weeklyComparison": {
+    "distanceChange": "+18%",
+    "fuelEfficiencyChange": "+5%",
+    "safetyScoreChange": "+12%",
+    "harshEventsChange": "-33%",
+    "idlingTimeChange": "-20%",
+    "speedingTimeChange": "-25%"
+  },
+  "environmentalImpact": {
+    "co2SavedKg": 2.6,
+    "fuelSavedLiters": 1.1,
+    "moneySavedRupees": 112,
+    "treesEquivalent": 0.12
+  },
+  "achievements": [
+    {
+      "id": "smooth_week",
+      "title": "Smooth Driver",
+      "description": "Completed a week with minimal harsh events",
+      "icon": "award",
+      "earnedDate": "2024-01-14",
+      "category": "safety"
+    },
+    {
+      "id": "fuel_efficient",
+      "title": "Eco Warrior",
+      "description": "Achieved above-average fuel efficiency for 5 consecutive trips",
+      "icon": "leaf",
+      "earnedDate": "2024-01-12",
+      "category": "efficiency"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "high",
+      "category": "efficiency",
+      "title": "Reduce idling time",
+      "description": "Turn off your engine when stopped for more than 30 seconds to save fuel",
+      "potentialSavings": "₹50/month"
+    },
+    {
+      "priority": "medium",
+      "category": "safety",
+      "title": "Maintain consistent speeds",
+      "description": "Use cruise control on highways to improve fuel efficiency and reduce harsh events",
+      "potentialSavings": "₹75/month"
+    },
+    {
+      "priority": "low",
+      "category": "planning",
+      "title": "Optimize route timing",
+      "description": "Consider alternative routes during peak hours to reduce stop-and-go traffic",
+      "potentialSavings": "₹30/month"
+    }
+  ]
+}
