@@ -74,8 +74,8 @@ export const useAuth = () => {
 
       if (response.ok && data.success !== false) {
         // Store session data
-        if (data.sessionToken) {
-          localStorage.setItem('voltride_session', data.sessionToken);
+        if (data.userId) {
+          localStorage.setItem('voltride_session', data.userId);
         }
         
         const user = data.user || {
