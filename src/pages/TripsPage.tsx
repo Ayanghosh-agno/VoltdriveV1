@@ -3,10 +3,12 @@ import { Calendar, Filter, MapPin, Clock, Fuel, TrendingUp, WifiOff, RefreshCw }
 import TripCard from '../components/TripCard';
 import FilterModal from '../components/FilterModal';
 import DateRangeModal, { DateRange } from '../components/DateRangeModal';
-import { useSalesforceData } from '../hooks/useSalesforceData';
+import AuthService from '../services/authService';
 
 const TripsPage: React.FC = () => {
-  const { salesforceData, loading, error, refreshData } = useSalesforceData();
+  const [allTrips, setAllTrips] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showDateRange, setShowDateRange] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -16,8 +18,82 @@ const TripsPage: React.FC = () => {
     preset: 'all'
   });
 
+  // Fetch all trips from your new API endpoint
+  const fetchAllTrips = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('🔄 Fetching all trips from /voltride/tripList...');
+      
+      // Get authenticated service instance
+      const authService = AuthService.getInstance();
+      
+      // Make authenticated request to your new endpoint
+      const response = await authService.makeAuthenticatedRequest('/services/apexrest/voltride/tripList', {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ All trips received from Salesforce:', data);
+      
+      // Check if this is an error response
+      if (data.success === false) {
+        throw new Error(data.error || 'Failed to fetch trips from Salesforce');
+      }
+      
+      // Validate the data structure - expect simple array of trips
+      const trips = data.trips || data || [];
+      if (!Array.isArray(trips)) {
+        console.warn('⚠️ Invalid trips data structure received from Salesforce');
+        throw new Error('Invalid trips data structure received from Salesforce');
+      }
+      
+      // Convert to internal format
+      const convertedTrips = trips.map((trip, index) => ({
+        id: index + 1,
+        tripId: trip.tripId,
+        tripNumber: trip.tripName,
+        date: trip.date,
+        startTime: trip.startTime,
+        endTime: trip.endTime,
+        distance: trip.distance,
+        duration: trip.duration,
+        fuelUsed: trip.fuelUsed,
+        avgSpeed: trip.avgSpeed,
+        maxSpeed: trip.maxSpeed,
+        score: trip.calculatedScore || calculateTempScore(trip),
+        events: { 
+          hardBraking: trip.harshBraking || 0, 
+          rapidAccel: trip.harshAcceleration || 0, 
+          speeding: trip.overSpeeding > 0 ? 1 : 0 
+        }
+      }));
+      
+      setAllTrips(convertedTrips);
+      console.log('📊 Trips data processed successfully:', convertedTrips.length, 'trips');
+      
+    } catch (err) {
+      console.error('❌ Error fetching trips:', err);
+      
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Unable to load trips. ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch trips on component mount
+  React.useEffect(() => {
+    fetchAllTrips();
+  }, [fetchAllTrips]);
+
   // Calculate score for display (temporary until Salesforce provides calculatedScore)
-  const calculateDisplayScore = (trip: any) => {
+  const calculateTempScore = (trip: any) => {
     if (trip.calculatedScore) return trip.calculatedScore;
     
     let score = 100;
@@ -38,35 +114,6 @@ const TripsPage: React.FC = () => {
     
     return Math.max(60, Math.min(100, Math.round(score)));
   };
-
-  // Convert Salesforce trip data to component format
-  const convertTripsData = (salesforceTrips: any[]) => {
-    return salesforceTrips.map((trip, index) => ({
-      id: index + 1,
-      tripId: trip.tripId,
-      tripNumber: trip.tripName,
-      date: trip.date,
-      startTime: trip.startTime,
-      endTime: trip.endTime,
-      distance: trip.distance,
-      duration: trip.duration,
-      fuelUsed: trip.fuelUsed,
-      avgSpeed: trip.avgSpeed,
-      maxSpeed: trip.maxSpeed,
-      score: calculateDisplayScore(trip),
-      events: { 
-        hardBraking: trip.harshBraking || 0, 
-        rapidAccel: trip.harshAcceleration || 0, 
-        speeding: trip.overSpeeding > 0 ? 1 : 0 
-      }
-    }));
-  };
-
-  // Get all trips from Salesforce data
-  const allTrips = useMemo(() => {
-    if (!salesforceData?.recentTrips) return [];
-    return convertTripsData(salesforceData.recentTrips);
-  }, [salesforceData]);
 
   const filterOptions = [
     { value: 'all', label: 'All Trips' },
@@ -112,6 +159,7 @@ const TripsPage: React.FC = () => {
     return filtered;
   }, [allTrips, selectedFilter, dateRange]);
 
+  // Calculate summary stats from filtered trips
   const totalDistance = filteredTrips.reduce((sum, trip) => sum + trip.distance, 0);
   const totalFuel = filteredTrips.reduce((sum, trip) => sum + trip.fuelUsed, 0);
   const avgScore = filteredTrips.length > 0 
@@ -188,7 +236,7 @@ const TripsPage: React.FC = () => {
           <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Trips</h3>
           <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={refreshData}
+            onClick={fetchAllTrips}
             className="inline-flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
@@ -278,7 +326,7 @@ const TripsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Summary Stats */}
+      {/* Summary Stats - Calculated from filtered trips */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center space-x-2 mb-2">
