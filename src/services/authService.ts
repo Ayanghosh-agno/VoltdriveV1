@@ -4,13 +4,13 @@ class AuthService {
   private tokenExpiry: number | null = null;
   private instanceUrl: string | null = null;
 
-  // Salesforce configuration - these will be set via environment variables
-  private readonly CLIENT_ID = import.meta.env.VITE_SALESFORCE_CLIENT_ID || 'default_client_id';
-  private readonly CLIENT_SECRET = import.meta.env.VITE_SALESFORCE_CLIENT_SECRET || 'default_client_secret';
-  private readonly USERNAME = import.meta.env.VITE_SALESFORCE_USERNAME || 'default_username';
-  private readonly PASSWORD = import.meta.env.VITE_SALESFORCE_PASSWORD || 'default_password';
-  private readonly SECURITY_TOKEN = import.meta.env.VITE_SALESFORCE_SECURITY_TOKEN || 'default_token';
-  private readonly INSTANCE_URL = import.meta.env.VITE_SALESFORCE_INSTANCE_URL || 'https://agno-dev-ed.develop.my.salesforce.com';
+  // Salesforce configuration - read from .env file
+  private readonly CLIENT_ID = import.meta.env.VITE_SALESFORCE_CLIENT_ID;
+  private readonly CLIENT_SECRET = import.meta.env.VITE_SALESFORCE_CLIENT_SECRET;
+  private readonly USERNAME = import.meta.env.VITE_SALESFORCE_USERNAME;
+  private readonly PASSWORD = import.meta.env.VITE_SALESFORCE_PASSWORD;
+  private readonly SECURITY_TOKEN = import.meta.env.VITE_SALESFORCE_SECURITY_TOKEN;
+  private readonly INSTANCE_URL = import.meta.env.VITE_SALESFORCE_INSTANCE_URL;
 
   public static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -50,7 +50,15 @@ class AuthService {
 
     // Check if Salesforce is configured
     if (!this.isConfigured()) {
-      console.log('🔧 Salesforce not configured, using local storage mode');
+      console.log('🔧 Salesforce not configured, using demo mode');
+      console.log('📋 Environment check:', {
+        hasClientId: !!this.CLIENT_ID,
+        hasClientSecret: !!this.CLIENT_SECRET,
+        hasUsername: !!this.USERNAME,
+        hasPassword: !!this.PASSWORD,
+        hasSecurityToken: !!this.SECURITY_TOKEN,
+        hasInstanceUrl: !!this.INSTANCE_URL
+      });
       return this.generateLocalToken();
     }
 
@@ -61,11 +69,11 @@ class AuthService {
         return this.accessToken;
       }
     } catch (error) {
-      console.log('⚠️ Salesforce authentication failed, using local storage mode:', error);
+      console.log('⚠️ Salesforce authentication failed, using demo mode:', error);
       return this.generateLocalToken();
     }
 
-    // Fallback to local storage mode
+    // Fallback to demo mode
     return this.generateLocalToken();
   }
 
@@ -75,6 +83,8 @@ class AuthService {
   private async authenticateWithCredentials(): Promise<void> {
     try {
       console.log('🔐 Authenticating with Salesforce...');
+      console.log('🌐 Using instance URL:', this.INSTANCE_URL);
+      console.log('👤 Using username:', this.USERNAME);
       
       // Always use the Netlify function proxy for authentication
       const baseUrl = this.getApiBaseUrl();
@@ -126,6 +136,7 @@ class AuthService {
       this.tokenExpiry = Date.now() + (3600 * 1000); // 1 hour default
 
       console.log('✅ Salesforce authentication successful');
+      console.log('🏢 Instance URL:', this.instanceUrl);
     } catch (error) {
       console.log('❌ Credential authentication failed:', error);
       throw error;
@@ -133,13 +144,13 @@ class AuthService {
   }
 
   /**
-   * Generate local token for local storage mode when Salesforce is unavailable
+   * Generate local token for demo mode when Salesforce is unavailable
    */
   private generateLocalToken(): string {
-    console.log('💾 Using local storage mode - Salesforce integration unavailable');
+    console.log('💾 Using demo mode - Salesforce integration unavailable');
     this.accessToken = 'demo_token_' + Date.now();
     this.tokenExpiry = Date.now() + (2 * 60 * 60 * 1000); // 2 hours from now
-    this.instanceUrl = this.INSTANCE_URL;
+    this.instanceUrl = this.INSTANCE_URL || 'https://demo.salesforce.com';
     return this.accessToken;
   }
 
@@ -180,7 +191,7 @@ class AuthService {
    * Get the Salesforce instance URL
    */
   getInstanceUrl(): string {
-    return this.instanceUrl || this.INSTANCE_URL;
+    return this.instanceUrl || this.INSTANCE_URL || 'https://demo.salesforce.com';
   }
 
   /**
@@ -190,7 +201,7 @@ class AuthService {
     const token = await this.getAccessToken();
     const instanceUrl = this.getInstanceUrl();
 
-    // Check if we're in local storage mode
+    // Check if we're in demo mode
     if (token.startsWith('demo_token_')) {
       return this.makeLocalRequest(endpoint, options);
     }
@@ -229,7 +240,7 @@ class AuthService {
 
       return response;
     } catch (error) {
-      console.log('⚠️ Salesforce API request failed, falling back to local storage mode:', error);
+      console.log('⚠️ Salesforce API request failed, falling back to demo mode:', error);
       return this.makeLocalRequest(endpoint, options);
     }
   }
@@ -238,15 +249,16 @@ class AuthService {
    * Make local API requests when Salesforce is unavailable
    */
   private async makeLocalRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    console.log('💾 Local storage mode API request:', endpoint);
+    console.log('💾 Demo mode API request:', endpoint);
     
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
 
     let mockData: any = {
       success: true,
-      message: 'Local storage mode - data saved locally',
-      timestamp: new Date().toISOString()
+      message: 'Demo mode - data saved locally',
+      timestamp: new Date().toISOString(),
+      mode: 'demo'
     };
 
     if (endpoint.includes('/settings') && options.method === 'GET') {
@@ -258,7 +270,8 @@ class AuthService {
           mockData = {
             success: true,
             settings: settings,
-            message: 'Settings loaded from local storage'
+            message: 'Settings loaded from local storage',
+            mode: 'demo'
           };
         } catch (error) {
           console.error('Error parsing stored settings:', error);
@@ -267,7 +280,8 @@ class AuthService {
         mockData = {
           success: true,
           settings: null,
-          message: 'No settings found'
+          message: 'No settings found',
+          mode: 'demo'
         };
       }
     }
@@ -285,10 +299,26 @@ class AuthService {
    * Check if Salesforce integration is properly configured
    */
   isConfigured(): boolean {
-    return this.CLIENT_ID !== 'default_client_id' && 
-           this.CLIENT_SECRET !== 'default_client_secret' &&
-           this.USERNAME !== 'default_username' &&
-           this.PASSWORD !== 'default_password';
+    const configured = !!(
+      this.CLIENT_ID && 
+      this.CLIENT_SECRET && 
+      this.USERNAME && 
+      this.PASSWORD && 
+      this.SECURITY_TOKEN && 
+      this.INSTANCE_URL
+    );
+    
+    if (!configured) {
+      console.log('🔧 Salesforce configuration missing. Required environment variables:');
+      console.log('   - VITE_SALESFORCE_CLIENT_ID:', !!this.CLIENT_ID);
+      console.log('   - VITE_SALESFORCE_CLIENT_SECRET:', !!this.CLIENT_SECRET);
+      console.log('   - VITE_SALESFORCE_USERNAME:', !!this.USERNAME);
+      console.log('   - VITE_SALESFORCE_PASSWORD:', !!this.PASSWORD);
+      console.log('   - VITE_SALESFORCE_SECURITY_TOKEN:', !!this.SECURITY_TOKEN);
+      console.log('   - VITE_SALESFORCE_INSTANCE_URL:', !!this.INSTANCE_URL);
+    }
+    
+    return configured;
   }
 
   /**
@@ -300,6 +330,20 @@ class AuthService {
       configured,
       mode: configured ? 'production' : 'demo'
     };
+  }
+
+  /**
+   * Debug method to check environment variables
+   */
+  debugEnvironment(): void {
+    console.log('🔍 Environment Variables Debug:');
+    console.log('CLIENT_ID:', this.CLIENT_ID ? `${this.CLIENT_ID.substring(0, 10)}...` : 'NOT SET');
+    console.log('CLIENT_SECRET:', this.CLIENT_SECRET ? 'SET' : 'NOT SET');
+    console.log('USERNAME:', this.USERNAME || 'NOT SET');
+    console.log('PASSWORD:', this.PASSWORD ? 'SET' : 'NOT SET');
+    console.log('SECURITY_TOKEN:', this.SECURITY_TOKEN ? 'SET' : 'NOT SET');
+    console.log('INSTANCE_URL:', this.INSTANCE_URL || 'NOT SET');
+    console.log('Is Configured:', this.isConfigured());
   }
 }
 
