@@ -263,14 +263,14 @@ const LoginPage: React.FC = () => {
               </form> 
 
               {/* Additional Options */}
-              {/* <div className="mt-8 text-center">
+              <div className="mt-8 text-center">
                 <p className="text-gray-600 text-sm">
                   Don't have an account?{' '}
                   <button className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
                     Contact Support
                   </button>
                 </p>
-              </div> */}
+              </div> 
             </div>
           </div>
         </div>
