@@ -127,9 +127,14 @@ const SettingsPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
             <p className="text-gray-600 mt-1">Customize your VoltRide experience</p>
-            <p className="text-xs text-gray-500 mt-1">
+            {/* <p className="text-xs text-gray-500 mt-1">
               Last updated: {getCurrentDateTime()}
-            </p>
+            </p> */}
+            {settings.lastUpdated && (
+              <p className="text-xs text-gray-500 mt-1">
+                Last updated: {new Date(settings.lastUpdated).toLocaleString()}
+              </p>
+            )}            
           </div>
         </div>
       </div>
