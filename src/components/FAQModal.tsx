@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ChevronDown, ChevronRight, HelpCircle, Wifi, WifiOff, Bluetooth, MapPin, Fuel, Shield, Smartphone, Car } from 'lucide-react';
+import { X, ChevronDown, ChevronRight, HelpCircle, Wifi, WifiOff, Bluetooth, MapPin, Fuel, Shield, Smartphone, Car, Menu } from 'lucide-react';
 import ContactSupportModal from './ContactSupportModal';
 
 interface FAQModalProps {
@@ -19,6 +19,7 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showContactSupport, setShowContactSupport] = useState(false);
+  const [showMobileCategories, setShowMobileCategories] = useState(false);
 
   const faqData: FAQItem[] = [
     // Hardware & Device Setup
@@ -148,21 +149,31 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
     );
   };
 
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setShowMobileCategories(false);
+  };
+
+  const getCurrentCategoryLabel = () => {
+    const category = categories.find(cat => cat.id === selectedCategory);
+    return category ? category.label : 'All Questions';
+  };
+
   if (!isOpen) return null;
 
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+        <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center space-x-3">
               <div className="bg-blue-100 p-2 rounded-lg">
-                <HelpCircle className="h-6 w-6 text-blue-600" />
+                <HelpCircle className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">Frequently Asked Questions</h3>
-                <p className="text-sm text-gray-600">Find answers to common questions about VoltRide</p>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">FAQ</h3>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Find answers to common questions about VoltRide</p>
               </div>
             </div>
             <button
@@ -173,9 +184,45 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
             </button>
           </div>
 
+          {/* Mobile Category Selector */}
+          <div className="lg:hidden border-b border-gray-200 p-4">
+            <button
+              onClick={() => setShowMobileCategories(!showMobileCategories)}
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            >
+              <div className="flex items-center space-x-2">
+                <Menu className="h-4 w-4 text-gray-600" />
+                <span className="font-medium text-gray-900">{getCurrentCategoryLabel()}</span>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-gray-600 transition-transform ${showMobileCategories ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showMobileCategories && (
+              <div className="mt-2 space-y-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                {categories.map((category) => {
+                  const IconComponent = category.icon;
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategorySelect(category.id)}
+                      className={`w-full flex items-center space-x-3 px-3 py-2 text-left transition-colors ${
+                        selectedCategory === category.id
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <IconComponent className="h-4 w-4" />
+                      <span className="text-sm">{category.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <div className="flex flex-1 overflow-hidden">
-            {/* Categories Sidebar */}
-            <div className="w-64 border-r border-gray-200 p-4 overflow-y-auto">
+            {/* Desktop Categories Sidebar */}
+            <div className="hidden lg:block w-64 border-r border-gray-200 p-4 overflow-y-auto">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Categories</h4>
               <div className="space-y-1">
                 {categories.map((category) => {
@@ -199,8 +246,8 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* FAQ Content */}
-            <div className="flex-1 p-6 overflow-y-auto">
-              <div className="space-y-4">
+            <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+              <div className="space-y-3 sm:space-y-4">
                 {filteredFAQs.map((faq) => {
                   const isExpanded = expandedItems.includes(faq.id);
                   const IconComponent = faq.icon;
@@ -209,22 +256,24 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
                     <div key={faq.id} className="border border-gray-200 rounded-lg">
                       <button
                         onClick={() => toggleExpanded(faq.id)}
-                        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                        className="w-full flex items-center justify-between p-3 sm:p-4 text-left hover:bg-gray-50 transition-colors"
                       >
-                        <div className="flex items-center space-x-3 flex-1">
-                          <IconComponent className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                          <span className="font-medium text-gray-900">{faq.question}</span>
+                        <div className="flex items-start space-x-3 flex-1 min-w-0">
+                          <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                          <span className="font-medium text-gray-900 text-sm sm:text-base leading-tight">{faq.question}</span>
                         </div>
-                        {isExpanded ? (
-                          <ChevronDown className="h-5 w-5 text-gray-500" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5 text-gray-500" />
-                        )}
+                        <div className="ml-2 flex-shrink-0">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                          )}
+                        </div>
                       </button>
                       
                       {isExpanded && (
-                        <div className="px-4 pb-4">
-                          <div className="pl-8 text-gray-600 whitespace-pre-line">
+                        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+                          <div className="pl-6 sm:pl-8 text-gray-600 text-sm sm:text-base whitespace-pre-line leading-relaxed">
                             {faq.answer}
                           </div>
                         </div>
@@ -235,10 +284,10 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {filteredFAQs.length === 0 && (
-                <div className="text-center py-12">
-                  <HelpCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">No questions found</h4>
-                  <p className="text-gray-600">Try selecting a different category or contact support for help.</p>
+                <div className="text-center py-8 sm:py-12">
+                  <HelpCircle className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+                  <h4 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No questions found</h4>
+                  <p className="text-sm sm:text-base text-gray-600">Try selecting a different category or contact support for help.</p>
                 </div>
               )}
             </div>
@@ -247,7 +296,7 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
           {/* Footer */}
           <div className="border-t border-gray-200 p-4 flex-shrink-0">
             <div className="text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Can't find what you're looking for?{' '}
                 <button 
                   onClick={() => setShowContactSupport(true)}
