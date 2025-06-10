@@ -5,6 +5,8 @@ import ToggleSwitch from '../components/ToggleSwitch';
 import EditProfileModal from '../components/EditProfileModal';
 import SaveStatusIndicator from '../components/SaveStatusIndicator';
 import ContactSupportModal from '../components/ContactSupportModal';
+import FAQModal from '../components/FAQModal';
+import UserGuideModal from '../components/UserGuideModal';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
 import { VehicleSettings } from '../types/settings';
@@ -32,6 +34,8 @@ const SettingsPage: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showContactSupport, setShowContactSupport] = useState(false);
+  const [showFAQ, setShowFAQ] = useState(false);
+  const [showUserGuide, setShowUserGuide] = useState(false);
 
   // Get current date and time
   const getCurrentDateTime = () => {
@@ -127,9 +131,6 @@ const SettingsPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
             <p className="text-gray-600 mt-1">Customize your VoltRide experience</p>
-            {/* <p className="text-xs text-gray-500 mt-1">
-              Last updated: {getCurrentDateTime()}
-            </p> */}
             {settings.lastUpdated && (
               <p className="text-xs text-gray-500 mt-1">
                 Last updated: {new Date(settings.lastUpdated).toLocaleString()}
@@ -546,9 +547,12 @@ const SettingsPage: React.FC = () => {
       {/* Help & Support */}
       <SettingSection icon={HelpCircle} title="Help & Support" description="Get help and contact support">
         <div className="space-y-3">
-          <button className="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <button 
+            onClick={() => setShowFAQ(true)}
+            className="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+          >
             <h4 className="font-medium text-gray-900">FAQ</h4>
-            <p className="text-sm text-gray-600">Frequently asked questions</p>
+            <p className="text-sm text-gray-600">Frequently asked questions about VoltRide hardware and app</p>
           </button>
           <button 
             onClick={() => setShowContactSupport(true)}
@@ -557,9 +561,12 @@ const SettingsPage: React.FC = () => {
             <h4 className="font-medium text-gray-900">Contact Support</h4>
             <p className="text-sm text-gray-600">Get help from our support team</p>
           </button>
-          <button className="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <button 
+            onClick={() => setShowUserGuide(true)}
+            className="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+          >
             <h4 className="font-medium text-gray-900">User Guide</h4>
-            <p className="text-sm text-gray-600">Learn how to use VoltRide</p>
+            <p className="text-sm text-gray-600">Complete guide to using VoltRide effectively</p>
           </button>
         </div>
       </SettingSection>
@@ -587,6 +594,18 @@ const SettingsPage: React.FC = () => {
       <ContactSupportModal
         isOpen={showContactSupport}
         onClose={() => setShowContactSupport(false)}
+      />
+
+      {/* FAQ Modal */}
+      <FAQModal
+        isOpen={showFAQ}
+        onClose={() => setShowFAQ(false)}
+      />
+
+      {/* User Guide Modal */}
+      <UserGuideModal
+        isOpen={showUserGuide}
+        onClose={() => setShowUserGuide(false)}
       />
 
       {/* Delete Account Confirmation */}
