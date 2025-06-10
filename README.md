@@ -12,7 +12,7 @@
 
 **Transform your driving experience with real-time analytics, fuel efficiency insights, and personalized safety recommendations.**
 
-[🚀 Live Demo](https://voltride.netlify.app) • [📖 Documentation](#documentation) • [🛠️ Setup Guide](#getting-started) • [🤝 Contributing](#contributing)
+[🚀 Live Demo](https://voltride.com) • [📖 Documentation](#documentation) • [🛠️ Setup Guide](#getting-started) • [🤝 Contributing](#contributing)
 
 </div>
 
@@ -80,7 +80,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/voltride.git
+   git clone https://github.com/Ayanghosh-agno/voltride.git
    cd voltride
    ```
 
@@ -286,12 +286,6 @@ npm run type-check   # TypeScript type checking
 2. Verify Salesforce API limits
 3. Review browser console for errors
 
-### Getting Help
-
-- 📧 **Email Support**: support@voltride.com
-- 💬 **In-App Support**: Use the contact form in settings
-- 📖 **Documentation**: Check the built-in user guide
-- 🐛 **Bug Reports**: Create an issue on GitHub
 
 ---
 
@@ -322,15 +316,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Acknowledgments
-
-- **React Team** - For the amazing framework
-- **Tailwind CSS** - For the utility-first CSS framework
-- **Salesforce** - For enterprise-grade cloud infrastructure
-- **Netlify** - For seamless deployment and hosting
-- **OBD-II Community** - For vehicle diagnostic standards
-
----
 
 ## 📞 Contact
 
