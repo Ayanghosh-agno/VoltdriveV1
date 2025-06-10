@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, BookOpen, Car, Smartphone, Settings, BarChart3, Shield, Zap, CheckCircle, AlertTriangle, Wifi, Bluetooth, MapPin } from 'lucide-react';
+import ContactSupportModal from './ContactSupportModal';
 
 interface UserGuideModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface GuideSection {
 
 const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose }) => {
   const [activeSection, setActiveSection] = useState<string>('getting-started');
+  const [showContactSupport, setShowContactSupport] = useState(false);
 
   const guideSections: GuideSection[] = [
     {
@@ -441,79 +443,90 @@ const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose }) => {
   const activeContent = guideSections.find(section => section.id === activeSection);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="bg-green-100 p-2 rounded-lg">
-              <BookOpen className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900">VoltRide User Guide</h3>
-              <p className="text-sm text-gray-600">Complete guide to using VoltRide effectively</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="h-5 w-5 text-gray-500" />
-          </button>
-        </div>
-
-        <div className="flex flex-1 overflow-hidden">
-          {/* Navigation Sidebar */}
-          <div className="w-80 border-r border-gray-200 p-4 overflow-y-auto">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">Guide Sections</h4>
-            <div className="space-y-1">
-              {guideSections.map((section) => {
-                const IconComponent = section.icon;
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-left transition-colors ${
-                      activeSection === section.id
-                        ? 'bg-green-50 text-green-700 border border-green-200'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <IconComponent className="h-5 w-5" />
-                    <span className="font-medium">{section.title}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Content Area */}
-          <div className="flex-1 p-6 overflow-y-auto">
-            {activeContent && (
-              <div>
-                <div className="flex items-center space-x-3 mb-6">
-                  <activeContent.icon className="h-6 w-6 text-green-600" />
-                  <h2 className="text-2xl font-bold text-gray-900">{activeContent.title}</h2>
-                </div>
-                {activeContent.content}
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-center space-x-3">
+              <div className="bg-green-100 p-2 rounded-lg">
+                <BookOpen className="h-6 w-6 text-green-600" />
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-gray-200 p-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Need more help? Contact our support team for personalized assistance.
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">VoltRide User Guide</h3>
+                <p className="text-sm text-gray-600">Complete guide to using VoltRide effectively</p>
+              </div>
             </div>
-            <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
-              Contact Support
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-500" />
             </button>
+          </div>
+
+          <div className="flex flex-1 overflow-hidden">
+            {/* Navigation Sidebar */}
+            <div className="w-80 border-r border-gray-200 p-4 overflow-y-auto">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Guide Sections</h4>
+              <div className="space-y-1">
+                {guideSections.map((section) => {
+                  const IconComponent = section.icon;
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => setActiveSection(section.id)}
+                      className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-left transition-colors ${
+                        activeSection === section.id
+                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <IconComponent className="h-5 w-5" />
+                      <span className="font-medium">{section.title}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 p-6 overflow-y-auto">
+              {activeContent && (
+                <div>
+                  <div className="flex items-center space-x-3 mb-6">
+                    <activeContent.icon className="h-6 w-6 text-green-600" />
+                    <h2 className="text-2xl font-bold text-gray-900">{activeContent.title}</h2>
+                  </div>
+                  {activeContent.content}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-gray-200 p-4 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Need more help? Contact our support team for personalized assistance.
+              </div>
+              <button 
+                onClick={() => setShowContactSupport(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+              >
+                Contact Support
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Contact Support Modal */}
+      <ContactSupportModal
+        isOpen={showContactSupport}
+        onClose={() => setShowContactSupport(false)}
+      />
+    </>
   );
 };
 

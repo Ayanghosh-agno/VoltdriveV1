@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Send, CheckCircle, AlertCircle, Loader2, MessageSquare } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useSettings } from '../hooks/useSettings';
 import AuthService from '../services/authService';
 
 interface ContactSupportModalProps {
@@ -24,6 +25,7 @@ interface CaseResponse {
 
 const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClose }) => {
   const { user, isAuthenticated } = useAuth();
+  const { settings } = useSettings();
   const [formData, setFormData] = useState<ContactFormData>({
     firstName: '',
     lastName: '',
@@ -35,11 +37,11 @@ const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClo
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Pre-populate form data for authenticated users
+  // Pre-populate form data for authenticated users using profile data
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // Extract first and last name from full name
-      const nameParts = user.name ? user.name.split(' ') : [];
+    if (isAuthenticated && settings?.profile) {
+      // Extract first and last name from profile full name
+      const nameParts = settings.profile.name ? settings.profile.name.split(' ') : [];
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
 
@@ -47,7 +49,7 @@ const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClo
         ...prev,
         firstName,
         lastName,
-        email: user.email || ''
+        email: settings.profile.email || ''
       }));
     } else {
       // Reset form for non-authenticated users
@@ -58,7 +60,7 @@ const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClo
         issueDescription: ''
       });
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, settings?.profile]);
 
   // Reset modal state when opened/closed
   useEffect(() => {
