@@ -160,7 +160,7 @@
 ### VoltRide Module Specifications
 
 - **OBD-II Compatibility** - Works with vehicles manufactured after 1996
-- **Bluetooth 5.0** - Wireless connectivity to mobile devices
+- **ESP32** - Microcontroller to handle reading and transmitting operation
 - **GPS Integration** - High-precision location tracking
 - **Cellular Connectivity** - 4G LTE for cloud synchronization
 - **Battery Life** - 30+ days standby, 7 days active use
@@ -336,9 +336,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **VoltRide Team**
 - 🌐 Website: [voltride.com](https://voltride.com)
-- 📧 Email: hello@voltride.com
-- 🐦 Twitter: [@VoltRideApp](https://twitter.com/VoltRideApp)
-- 💼 LinkedIn: [VoltRide](https://linkedin.com/company/voltride)
+- 📧 Email: ayanghosh974@gmail.com
+- 💼 LinkedIn: [Ayan Ghosh](https://www.linkedin.com/in/ayan-ghosh-4743841a1/)
 
 ---
 
