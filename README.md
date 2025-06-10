@@ -14,6 +14,14 @@
 
 [🚀 Live Demo](https://voltride.com) • [📖 Documentation](#documentation) • [🛠️ Setup Guide](#getting-started) • [🤝 Contributing](#contributing)
 
+<br>
+
+<a href="https://bolt.new" target="_blank">
+  <img src="./public/black_circle_360x360.png" alt="Built with Bolt.new" width="60" height="60" style="border-radius: 50%;">
+</a>
+
+**🚀 Built completely with [Bolt.new](https://bolt.new) - The AI-powered full-stack development platform**
+
 </div>
 
 ---
@@ -286,7 +294,6 @@ npm run type-check   # TypeScript type checking
 2. Verify Salesforce API limits
 3. Review browser console for errors
 
-
 ---
 
 ## 🤝 Contributing
@@ -316,7 +323,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-
 ## 📞 Contact
 
 **VoltRide Team**
@@ -330,8 +336,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by Ayan Ghosh**
 
+<br>
+
+<a href="https://bolt.new" target="_blank">
+  <img src="./public/black_circle_360x360.png" alt="Built with Bolt.new" width="80" height="80" style="border-radius: 50%; margin: 10px;">
+</a>
+
+**🚀 Proudly built with [Bolt.new](https://bolt.new) - The future of AI-powered development**
+
+<br>
+
 [![Built with React](https://img.shields.io/badge/Built%20with-React-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
 [![Powered by Salesforce](https://img.shields.io/badge/Powered%20by-Salesforce-00A1E0?style=flat-square&logo=salesforce)](https://salesforce.com/)
 [![Deployed on Netlify](https://img.shields.io/badge/Deployed%20on-Netlify-00C7B7?style=flat-square&logo=netlify)](https://netlify.com/)
+[![Built with Bolt.new](https://img.shields.io/badge/Built%20with-Bolt.new-000000?style=flat-square&logo=bolt)](https://bolt.new/)
 
 </div>
