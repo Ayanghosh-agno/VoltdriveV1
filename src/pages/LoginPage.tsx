@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Car, Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import ContactSupportModal from '../components/ContactSupportModal';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showContactSupport, setShowContactSupport] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -300,7 +302,10 @@ const LoginPage: React.FC = () => {
               <div className="mt-8 text-center">
                 <p className="text-gray-600 text-sm">
                   Don't have an account?{' '}
-                  <button className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                  <button 
+                    onClick={() => setShowContactSupport(true)}
+                    className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                  >
                     Contact Support
                   </button>
                 </p>
@@ -309,6 +314,12 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Contact Support Modal */}
+      <ContactSupportModal
+        isOpen={showContactSupport}
+        onClose={() => setShowContactSupport(false)}
+      />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import SettingSection from '../components/SettingSection';
 import ToggleSwitch from '../components/ToggleSwitch';
 import EditProfileModal from '../components/EditProfileModal';
 import SaveStatusIndicator from '../components/SaveStatusIndicator';
+import ContactSupportModal from '../components/ContactSupportModal';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
 import { VehicleSettings } from '../types/settings';
@@ -30,6 +31,7 @@ const SettingsPage: React.FC = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showContactSupport, setShowContactSupport] = useState(false);
 
   // Get current date and time
   const getCurrentDateTime = () => {
@@ -543,7 +545,10 @@ const SettingsPage: React.FC = () => {
             <h4 className="font-medium text-gray-900">FAQ</h4>
             <p className="text-sm text-gray-600">Frequently asked questions</p>
           </button>
-          <button className="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <button 
+            onClick={() => setShowContactSupport(true)}
+            className="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+          >
             <h4 className="font-medium text-gray-900">Contact Support</h4>
             <p className="text-sm text-gray-600">Get help from our support team</p>
           </button>
@@ -571,6 +576,12 @@ const SettingsPage: React.FC = () => {
         onClose={() => setIsEditProfileOpen(false)}
         onSave={handleProfileSave}
         currentProfile={settings.profile}
+      />
+
+      {/* Contact Support Modal */}
+      <ContactSupportModal
+        isOpen={showContactSupport}
+        onClose={() => setShowContactSupport(false)}
       />
 
       {/* Delete Account Confirmation */}
