@@ -344,7 +344,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Made with ❤️ by the VoltRide Team**
+**Made with ❤️ by Ayan Ghosh**
 
 [![Built with React](https://img.shields.io/badge/Built%20with-React-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
 [![Powered by Salesforce](https://img.shields.io/badge/Powered%20by-Salesforce-00A1E0?style=flat-square&logo=salesforce)](https://salesforce.com/)
