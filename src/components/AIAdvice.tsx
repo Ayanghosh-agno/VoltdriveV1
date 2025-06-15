@@ -25,48 +25,6 @@ interface SalesforceInsight {
 
 const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
 
-  const AIAdvice = () => {
-    const advice = [];
-    tripData.insights.forEach(sfInsight => {
-      switch (sfInsight.type) {
-        case 'positive':
-            advice.push({
-                    type: 'success',
-                    icon: CheckCircle,
-                    title: '',
-                    description: sfInsight.description,
-                    color: 'text-green-600 bg-green-50 border-green-200'
-                  });
-        case 'warning':
-            advice.push({
-                    type: 'warning',
-                    icon: TrendingUp,
-                    title: '',
-                    description: sfInsight.description,
-                    color: 'text-yellow-600 bg-yellow-50 border-yellow-200'
-                  });
-        case 'tip':
-          advice.push({
-                    type: 'tip',
-                    icon: Lightbulb,
-                    title: '',
-                    description: sfInsight.description,
-                    color: 'text-blue-600 bg-blue-50 border-blue-200'
-                  });
-        default:
-          advice.push({
-                    type: 'tip',
-                    icon: Lightbulb,
-                    title: '',
-                    description: sfInsight.description,
-                    color: 'text-blue-600 bg-blue-50 border-blue-200'
-                  });
-        }    
-    }      
-    return advice;
-  };
-
-  
   const generateAdvice = () => {
     const advice = [];
     const fuelEfficiency = tripData.mileage ? parseFloat(tripData.mileage) : (tripData.distance / tripData.fuelUsed);
@@ -156,6 +114,47 @@ const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
     return advice;
   };
 
+  const AIAdvice = () => {
+    const advice = [];
+    tripData.insights.forEach(sfInsight => {
+      switch (sfInsight.type) {
+        case 'positive':
+            advice.push({
+                    type: 'success',
+                    icon: CheckCircle,
+                    title: '',
+                    description: sfInsight.description,
+                    color: 'text-green-600 bg-green-50 border-green-200'
+                  });
+        case 'warning':
+            advice.push({
+                    type: 'warning',
+                    icon: TrendingUp,
+                    title: '',
+                    description: sfInsight.description,
+                    color: 'text-yellow-600 bg-yellow-50 border-yellow-200'
+                  });
+        case 'tip':
+          advice.push({
+                    type: 'tip',
+                    icon: Lightbulb,
+                    title: '',
+                    description: sfInsight.description,
+                    color: 'text-blue-600 bg-blue-50 border-blue-200'
+                  });
+        default:
+          advice.push({
+                    type: 'tip',
+                    icon: Lightbulb,
+                    title: '',
+                    description: sfInsight.description,
+                    color: 'text-blue-600 bg-blue-50 border-blue-200'
+                  });
+        }    
+    }      
+    return advice;
+  };
+  
   const adviceItems = tripData.insights && tripData.insights.length > 0
     ? AIAdvice()
     : generateAdvice();
