@@ -15,7 +15,12 @@ interface AIAdviceProps {
     distance: number;
     avgSpeed: number;
     mileage?: string; // Added mileage support
+    insights?: SalesforceInsight[];
   };
+}
+interface SalesforceInsight {
+  type: 'positive' | 'warning' | 'tip'; // These are the types from Salesforce JSON
+  description: string;
 }
 
 const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
@@ -108,8 +113,10 @@ const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
     return advice;
   };
 
-  const adviceItems = generateAdvice();
-
+  const adviceItems = tripData.insights && tripData.insights.length > 0
+    ? tripData.insights
+    : generateAdvice();
+  
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
       <div className="flex items-center space-x-3 mb-6">
