@@ -157,7 +157,7 @@ const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
   };
 
   const adviceItems = tripData.insights && tripData.insights.length > 0
-    ? AIAdvice();
+    ? AIAdvice()
     : generateAdvice();
   
   return (
