@@ -64,7 +64,7 @@ const AIAdvice: React.FC<AIAdviceProps> = ({ tripData }) => {
         }    
     }      
     return advice;
-  }
+  };
 
   
   const generateAdvice = () => {
