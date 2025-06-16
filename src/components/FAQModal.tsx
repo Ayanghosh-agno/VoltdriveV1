@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown, ChevronRight, HelpCircle, Wifi, WifiOff, Bluetooth, MapPin, Fuel, Shield, Smartphone, Car, Menu } from 'lucide-react';
 import { useModal } from '../context/ModalContext';
 import ContactSupportModal from './ContactSupportModal';
@@ -22,17 +22,23 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
   const [showContactSupport, setShowContactSupport] = useState(false);
   const [showMobileCategories, setShowMobileCategories] = useState(false);
   const { openModal, closeModal } = useModal();
+  const prevIsOpenRef = useRef<boolean>(isOpen);
 
-  // Handle modal state for navigation bar
+  // Handle modal state for navigation bar - Fixed to prevent unnecessary calls
   useEffect(() => {
-    console.log('📱 FAQ Modal isOpen changed:', isOpen);
-    if (isOpen) {
-      console.log('📱 FAQ Modal calling openModal()');
+    console.log('📱 FAQ Modal isOpen changed:', isOpen, 'previous:', prevIsOpenRef.current);
+    
+    // Only call modal functions when there's an actual transition
+    if (isOpen && !prevIsOpenRef.current) {
+      console.log('📱 FAQ Modal calling openModal() - transition from false to true');
       openModal();
-    } else {
-      console.log('📱 FAQ Modal calling closeModal()');
+    } else if (!isOpen && prevIsOpenRef.current) {
+      console.log('📱 FAQ Modal calling closeModal() - transition from true to false');
       closeModal();
     }
+    
+    // Update the ref to track the current state
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, openModal, closeModal]);
 
   const faqData: FAQItem[] = [

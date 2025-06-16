@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, BookOpen, Car, Smartphone, Settings, BarChart3, Shield, Zap, CheckCircle, AlertTriangle, Wifi, Bluetooth, MapPin, Menu, ChevronDown } from 'lucide-react';
 import { useModal } from '../context/ModalContext';
 import ContactSupportModal from './ContactSupportModal';
@@ -20,17 +20,23 @@ const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose }) => {
   const [showContactSupport, setShowContactSupport] = useState(false);
   const [showMobileSections, setShowMobileSections] = useState(false);
   const { openModal, closeModal } = useModal();
+  const prevIsOpenRef = useRef<boolean>(isOpen);
 
-  // Handle modal state for navigation bar
+  // Handle modal state for navigation bar - Fixed to prevent unnecessary calls
   useEffect(() => {
-    console.log('📱 User Guide Modal isOpen changed:', isOpen);
-    if (isOpen) {
-      console.log('📱 User Guide Modal calling openModal()');
+    console.log('📱 User Guide Modal isOpen changed:', isOpen, 'previous:', prevIsOpenRef.current);
+    
+    // Only call modal functions when there's an actual transition
+    if (isOpen && !prevIsOpenRef.current) {
+      console.log('📱 User Guide Modal calling openModal() - transition from false to true');
       openModal();
-    } else {
-      console.log('📱 User Guide Modal calling closeModal()');
+    } else if (!isOpen && prevIsOpenRef.current) {
+      console.log('📱 User Guide Modal calling closeModal() - transition from true to false');
       closeModal();
     }
+    
+    // Update the ref to track the current state
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, openModal, closeModal]);
 
   const guideSections: GuideSection[] = [

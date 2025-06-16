@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, CheckCircle, AlertCircle, Loader2, MessageSquare } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
@@ -28,6 +28,7 @@ const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClo
   const { user, isAuthenticated } = useAuth();
   const { settings } = useSettings();
   const { openModal, closeModal } = useModal();
+  const prevIsOpenRef = useRef<boolean>(isOpen);
   const [formData, setFormData] = useState<ContactFormData>({
     firstName: '',
     lastName: '',
@@ -39,16 +40,21 @@ const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClo
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Handle modal state for navigation bar
+  // Handle modal state for navigation bar - Fixed to prevent unnecessary calls
   useEffect(() => {
-    console.log('📱 Contact Support Modal isOpen changed:', isOpen);
-    if (isOpen) {
-      console.log('📱 Contact Support Modal calling openModal()');
+    console.log('📱 Contact Support Modal isOpen changed:', isOpen, 'previous:', prevIsOpenRef.current);
+    
+    // Only call modal functions when there's an actual transition
+    if (isOpen && !prevIsOpenRef.current) {
+      console.log('📱 Contact Support Modal calling openModal() - transition from false to true');
       openModal();
-    } else {
-      console.log('📱 Contact Support Modal calling closeModal()');
+    } else if (!isOpen && prevIsOpenRef.current) {
+      console.log('📱 Contact Support Modal calling closeModal() - transition from true to false');
       closeModal();
     }
+    
+    // Update the ref to track the current state
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, openModal, closeModal]);
 
   // Pre-populate form data for authenticated users using profile data
