@@ -25,9 +25,12 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
 
   // Handle modal state for navigation bar
   useEffect(() => {
+    console.log('📱 FAQ Modal isOpen changed:', isOpen);
     if (isOpen) {
+      console.log('📱 FAQ Modal calling openModal()');
       openModal();
     } else {
+      console.log('📱 FAQ Modal calling closeModal()');
       closeModal();
     }
   }, [isOpen, openModal, closeModal]);

@@ -23,9 +23,12 @@ const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose }) => {
 
   // Handle modal state for navigation bar
   useEffect(() => {
+    console.log('📱 User Guide Modal isOpen changed:', isOpen);
     if (isOpen) {
+      console.log('📱 User Guide Modal calling openModal()');
       openModal();
     } else {
+      console.log('📱 User Guide Modal calling closeModal()');
       closeModal();
     }
   }, [isOpen, openModal, closeModal]);

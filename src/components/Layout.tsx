@@ -11,6 +11,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const { isAnyModalOpen } = useModal();
 
+  console.log('🔍 Layout render - isAnyModalOpen:', isAnyModalOpen);
+
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/trips', label: 'All Trips', icon: RouteIcon },

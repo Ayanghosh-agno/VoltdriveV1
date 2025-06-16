@@ -41,9 +41,12 @@ const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClo
 
   // Handle modal state for navigation bar
   useEffect(() => {
+    console.log('📱 Contact Support Modal isOpen changed:', isOpen);
     if (isOpen) {
+      console.log('📱 Contact Support Modal calling openModal()');
       openModal();
     } else {
+      console.log('📱 Contact Support Modal calling closeModal()');
       closeModal();
     }
   }, [isOpen, openModal, closeModal]);
@@ -177,6 +180,7 @@ const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClo
 
   const handleClose = () => {
     if (!loading) {
+      console.log('📱 Contact Support Modal handleClose called');
       onClose();
     }
   };
