@@ -582,7 +582,7 @@ const SettingsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Edit Profile Modal */}
+      {/* ALL MODALS - Always rendered with isOpen prop */}
       <EditProfileModal
         isOpen={isEditProfileOpen}
         onClose={() => setIsEditProfileOpen(false)}
@@ -590,19 +590,16 @@ const SettingsPage: React.FC = () => {
         currentProfile={settings.profile}
       />
 
-      {/* Contact Support Modal */}
       <ContactSupportModal
         isOpen={showContactSupport}
         onClose={() => setShowContactSupport(false)}
       />
 
-      {/* FAQ Modal */}
       <FAQModal
         isOpen={showFAQ}
         onClose={() => setShowFAQ(false)}
       />
 
-      {/* User Guide Modal */}
       <UserGuideModal
         isOpen={showUserGuide}
         onClose={() => setShowUserGuide(false)}
