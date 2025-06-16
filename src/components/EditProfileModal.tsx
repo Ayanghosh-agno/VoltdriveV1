@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, User, Mail, Phone, MapPin, Calendar } from 'lucide-react';
 import { useModal } from '../context/ModalContext';
 
@@ -27,14 +27,23 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const [formData, setFormData] = useState<ProfileData>(currentProfile);
   const [errors, setErrors] = useState<Partial<ProfileData>>({});
   const { openModal, closeModal } = useModal();
+  const prevIsOpenRef = useRef<boolean>(isOpen);
 
-  // Handle modal state for navigation bar
+  // Handle modal state for navigation bar - Fixed to prevent unnecessary calls
   useEffect(() => {
-    if (isOpen) {
+    console.log('📱 Edit Profile Modal isOpen changed:', isOpen, 'previous:', prevIsOpenRef.current);
+    
+    // Only call modal functions when there's an actual transition
+    if (isOpen && !prevIsOpenRef.current) {
+      console.log('📱 Edit Profile Modal calling openModal() - transition from false to true');
       openModal();
-    } else {
+    } else if (!isOpen && prevIsOpenRef.current) {
+      console.log('📱 Edit Profile Modal calling closeModal() - transition from true to false');
       closeModal();
     }
+    
+    // Update the ref to track the current state
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, openModal, closeModal]);
 
   if (!isOpen) return null;
@@ -70,12 +79,14 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   const handleSave = () => {
     if (validateForm()) {
+      console.log('📱 Edit Profile Modal handleSave called');
       onSave(formData);
       onClose();
     }
   };
 
   const handleCancel = () => {
+    console.log('📱 Edit Profile Modal handleCancel called');
     setFormData(currentProfile);
     setErrors({});
     onClose();
