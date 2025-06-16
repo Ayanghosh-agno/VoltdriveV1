@@ -13,8 +13,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public login page */}
-        <Route path="/login" element={<LoginPage />} />
+        {/* Public login page wrapped with ModalProvider */}
+        <Route path="/login" element={
+          <ModalProvider>
+            <LoginPage />
+          </ModalProvider>
+        } />
         
         {/* Protected routes with layout */}
         <Route path="/*" element={
