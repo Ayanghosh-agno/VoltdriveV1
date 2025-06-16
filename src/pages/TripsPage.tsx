@@ -390,24 +390,21 @@ const TripsPage: React.FC = () => {
       )}
 
       {/* Filter Modal */}
-      {showFilters && (
-        <FilterModal
-          options={filterOptions}
-          selectedFilter={selectedFilter}
-          onFilterChange={setSelectedFilter}
-          onClose={() => setShowFilters(false)}
-        />
-      )}
+      <FilterModal
+        isOpen={showFilters}
+        options={filterOptions}
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+        onClose={() => setShowFilters(false)}
+      />
 
       {/* Date Range Modal */}
-      {showDateRange && (
-        <DateRangeModal
-          isOpen={showDateRange}
-          onClose={() => setShowDateRange(false)}
-          onApply={handleDateRangeApply}
-          currentRange={dateRange}
-        />
-      )}
+      <DateRangeModal
+        isOpen={showDateRange}
+        onClose={() => setShowDateRange(false)}
+        onApply={handleDateRangeApply}
+        currentRange={dateRange}
+      />
     </div>
   );
 };

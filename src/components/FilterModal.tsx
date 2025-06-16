@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { useModal } from '../context/ModalContext';
 
 interface FilterModalProps {
+  isOpen: boolean;
   options: { value: string; label: string }[];
   selectedFilter: string;
   onFilterChange: (filter: string) => void;
@@ -10,6 +11,7 @@ interface FilterModalProps {
 }
 
 const FilterModal: React.FC<FilterModalProps> = ({
+  isOpen,
   options,
   selectedFilter,
   onFilterChange,
@@ -19,9 +21,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
   // Handle modal state for navigation bar
   useEffect(() => {
-    openModal();
-    return () => closeModal();
-  }, [openModal, closeModal]);
+    if (isOpen) {
+      openModal();
+    } else {
+      closeModal();
+    }
+  }, [isOpen, openModal, closeModal]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
