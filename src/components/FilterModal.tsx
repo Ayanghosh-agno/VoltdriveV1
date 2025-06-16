@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useModal } from '../context/ModalContext';
 
 interface FilterModalProps {
   options: { value: string; label: string }[];
@@ -14,6 +15,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
   onFilterChange,
   onClose
 }) => {
+  const { openModal, closeModal } = useModal();
+
+  // Handle modal state for navigation bar
+  useEffect(() => {
+    openModal();
+    return () => closeModal();
+  }, [openModal, closeModal]);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-sm w-full p-6">

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, BookOpen, Car, Smartphone, Settings, BarChart3, Shield, Zap, CheckCircle, AlertTriangle, Wifi, Bluetooth, MapPin, Menu, ChevronDown } from 'lucide-react';
+import { useModal } from '../context/ModalContext';
 import ContactSupportModal from './ContactSupportModal';
 
 interface UserGuideModalProps {
@@ -18,6 +19,16 @@ const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose }) => {
   const [activeSection, setActiveSection] = useState<string>('getting-started');
   const [showContactSupport, setShowContactSupport] = useState(false);
   const [showMobileSections, setShowMobileSections] = useState(false);
+  const { openModal, closeModal } = useModal();
+
+  // Handle modal state for navigation bar
+  useEffect(() => {
+    if (isOpen) {
+      openModal();
+    } else {
+      closeModal();
+    }
+  }, [isOpen, openModal, closeModal]);
 
   const guideSections: GuideSection[] = [
     {

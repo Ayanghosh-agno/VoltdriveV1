@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock } from 'lucide-react';
+import { useModal } from '../context/ModalContext';
 
 interface DateRangeModalProps {
   isOpen: boolean;
@@ -21,6 +22,16 @@ const DateRangeModal: React.FC<DateRangeModalProps> = ({
   currentRange
 }) => {
   const [selectedRange, setSelectedRange] = useState<DateRange>(currentRange);
+  const { openModal, closeModal } = useModal();
+
+  // Handle modal state for navigation bar
+  useEffect(() => {
+    if (isOpen) {
+      openModal();
+    } else {
+      closeModal();
+    }
+  }, [isOpen, openModal, closeModal]);
 
   if (!isOpen) return null;
 

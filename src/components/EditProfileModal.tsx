@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, User, Mail, Phone, MapPin, Calendar } from 'lucide-react';
+import { useModal } from '../context/ModalContext';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -25,6 +26,16 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<ProfileData>(currentProfile);
   const [errors, setErrors] = useState<Partial<ProfileData>>({});
+  const { openModal, closeModal } = useModal();
+
+  // Handle modal state for navigation bar
+  useEffect(() => {
+    if (isOpen) {
+      openModal();
+    } else {
+      closeModal();
+    }
+  }, [isOpen, openModal, closeModal]);
 
   if (!isOpen) return null;
 

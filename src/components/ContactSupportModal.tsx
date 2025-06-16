@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Send, CheckCircle, AlertCircle, Loader2, MessageSquare } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
+import { useModal } from '../context/ModalContext';
 import AuthService from '../services/authService';
 
 interface ContactSupportModalProps {
@@ -26,6 +27,7 @@ interface CaseResponse {
 const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClose }) => {
   const { user, isAuthenticated } = useAuth();
   const { settings } = useSettings();
+  const { openModal, closeModal } = useModal();
   const [formData, setFormData] = useState<ContactFormData>({
     firstName: '',
     lastName: '',
@@ -36,6 +38,15 @@ const ContactSupportModal: React.FC<ContactSupportModalProps> = ({ isOpen, onClo
   const [submitted, setSubmitted] = useState(false);
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Handle modal state for navigation bar
+  useEffect(() => {
+    if (isOpen) {
+      openModal();
+    } else {
+      closeModal();
+    }
+  }, [isOpen, openModal, closeModal]);
 
   // Pre-populate form data for authenticated users using profile data
   useEffect(() => {

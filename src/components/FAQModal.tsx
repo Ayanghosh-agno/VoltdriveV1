@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ChevronDown, ChevronRight, HelpCircle, Wifi, WifiOff, Bluetooth, MapPin, Fuel, Shield, Smartphone, Car, Menu } from 'lucide-react';
+import { useModal } from '../context/ModalContext';
 import ContactSupportModal from './ContactSupportModal';
 
 interface FAQModalProps {
@@ -20,6 +21,16 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showContactSupport, setShowContactSupport] = useState(false);
   const [showMobileCategories, setShowMobileCategories] = useState(false);
+  const { openModal, closeModal } = useModal();
+
+  // Handle modal state for navigation bar
+  useEffect(() => {
+    if (isOpen) {
+      openModal();
+    } else {
+      closeModal();
+    }
+  }, [isOpen, openModal, closeModal]);
 
   const faqData: FAQItem[] = [
     // Hardware & Device Setup
@@ -207,12 +218,12 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
                       onClick={() => handleCategorySelect(category.id)}
                       className={`w-full flex items-center space-x-3 px-3 py-2 text-left transition-colors ${
                         selectedCategory === category.id
-                          ? 'bg-blue-50 text-blue-700'
+                          ? 'bg-green-50 text-green-700'
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       <IconComponent className="h-4 w-4" />
-                      <span className="text-sm">{category.label}</span>
+                      <span className="text-sm font-medium">{category.label}</span>
                     </button>
                   );
                 })}
@@ -222,7 +233,7 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
 
           <div className="flex flex-1 overflow-hidden">
             {/* Desktop Categories Sidebar */}
-            <div className="hidden lg:block w-64 border-r border-gray-200 p-4 overflow-y-auto">
+            <div className="hidden lg:block w-80 border-r border-gray-200 p-4 overflow-y-auto">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Categories</h4>
               <div className="space-y-1">
                 {categories.map((category) => {
@@ -231,14 +242,14 @@ const FAQModal: React.FC<FAQModalProps> = ({ isOpen, onClose }) => {
                     <button
                       key={category.id}
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                      className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-left transition-colors ${
                         selectedCategory === category.id
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                          ? 'bg-green-50 text-green-700 border border-green-200'
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      <IconComponent className="h-4 w-4" />
-                      <span className="text-sm">{category.label}</span>
+                      <IconComponent className="h-5 w-5" />
+                      <span className="font-medium">{category.label}</span>
                     </button>
                   );
                 })}

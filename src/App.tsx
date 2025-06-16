@@ -7,6 +7,7 @@ import TripDetailPage from './pages/TripDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ModalProvider } from './context/ModalContext';
 
 function App() {
   return (
@@ -18,14 +19,16 @@ function App() {
         {/* Protected routes with layout */}
         <Route path="/*" element={
           <ProtectedRoute>
-            <Layout>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/trips" element={<TripsPage />} />
-                <Route path="/trips/:tripId" element={<TripDetailPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-              </Routes>
-            </Layout>
+            <ModalProvider>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/trips" element={<TripsPage />} />
+                  <Route path="/trips/:tripId" element={<TripDetailPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                </Routes>
+              </Layout>
+            </ModalProvider>
           </ProtectedRoute>
         } />
       </Routes>

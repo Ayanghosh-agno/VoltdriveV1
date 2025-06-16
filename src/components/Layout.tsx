@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Router as RouteIcon, Settings, Car } from 'lucide-react';
+import { useModal } from '../context/ModalContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,6 +9,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const { isAnyModalOpen } = useModal();
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -97,8 +99,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </a>
       </div>
 
-      {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-white/20 z-50">
+      {/* Mobile Navigation - Hidden when modal is open */}
+      <nav className={`md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-white/20 z-50 transition-transform duration-300 ${
+        isAnyModalOpen ? 'transform translate-y-full' : 'transform translate-y-0'
+      }`}>
         <div className="flex justify-around py-2">
           {navItems.map((item) => {
             const Icon = item.icon;
