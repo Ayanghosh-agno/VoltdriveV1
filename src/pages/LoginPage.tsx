@@ -10,8 +10,8 @@ const LoginPage: React.FC = () => {
   const { login, isAuthenticated, loading: authLoading } = useAuth();
   
   const [formData, setFormData] = useState({
-    username: 'ayanghosh974@gmail.com',
-    password: 'Bolt1234'
+    username: 'BoltAdmin',
+    password: 'BoltPass'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
